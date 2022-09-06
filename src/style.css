@@ -1,0 +1,65 @@
+@font-face {
+    font-family: "CAT Walzhari";
+    src: "/fonts/CAT_Walthari.ttf";
+}
+
+body {
+    max-width: 768px;
+    margin: auto;
+    font-family: 'Roboto Slab', serif;
+    background-size: 51px 51px;
+}
+
+ul {
+    list-style-type: square;
+}
+
+header {
+    font-family: 'UnifrakturCook', cursive;
+    font-size: 80px;
+    padding-left: 1%;
+    padding-right: 3%;
+    background-color: antiquewhite;
+    /* border-bottom: 2px solid black; */
+    margin-top: 5px;
+
+}
+
+header a {
+    color: white;
+    text-decoration: none;
+}
+
+main {
+    padding: 2%;
+    background-color: white;
+}
+
+
+footer {
+    border-top: 2px solid black;
+    margin-bottom: 100px;
+    padding: 2%;
+}
+
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+figure {
+    font-style: italic;
+}
+
+video {
+    display: block;
+    width: 100%;
+}
+
+/*
+@media (prefers-color-scheme: dark) {
+    body {
+        color: #ffffff;
+        background-color: #000000;
+    }
