@@ -5,7 +5,7 @@ layout: post.njk
 
 # {{title}}
 
-_Updated 7th Sep 2022_
+_Updated 12th Sep 2022_
 
 
 With cheap 3D printers and PCB manufacturing services you could concieve a piece of hardware and almost have a physical prototype on your desk in the same week.

@@ -5,7 +5,7 @@ layout: post.njk
 
 # {{title}}
 
-_Updated 7 Sep 2022_
+_Updated 12 Sep 2022_
 
 
 The [Strandbeests](https://www.strandbeest.com/) are a family of kinetic sculptures developed by Theo Jansen.
