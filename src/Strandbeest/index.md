@@ -57,7 +57,7 @@ When it had finished running I had a set of a hundred different paths, and I jus
 Now that I had my finished PRBM, I set about turning it into the compliant linkage it was supposed to be representing.
 I replaced all the joints with flexures and filled the spaces between with rigid bodies.
 I attempted to run a FEM analyis using CalculiX in Freecad, applying different displacements to try and replicate the effect of the crank turning. The results aren't good, I suspect because the internal solver is linear. Notice how the pivot hole expands and contracts oddly.
-<div style="margin: auto; display: flex; gap: 5%">
+<div style="display: flex; gap: 5%">
 
 <video autoplay loop style="">
 <source src="media/prbm.webm" type="video/webm">
