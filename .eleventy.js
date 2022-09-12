@@ -1,9 +1,11 @@
 
 
-const mathjaxPlugin = require("eleventy-plugin-mathjax");
+// const mathjaxPlugin = require("eleventy-plugin-mathjax");
+const markdownIt = require("markdown-it")
+// const markdownItAnchor = require("markdown-it-anchor")
 
-module.exports = function(eleventyConfig) {
-    
+module.exports = function (eleventyConfig) {
+
     eleventyConfig.addPassthroughCopy("src/**/*.jpg");
     eleventyConfig.addPassthroughCopy("src/**/*.png");
     eleventyConfig.addPassthroughCopy("src/**/*.webm");
@@ -13,6 +15,16 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/**/*.css");
     eleventyConfig.addPassthroughCopy("src/**/*.svg");
     eleventyConfig.addPassthroughCopy("src/**/*.pdf");
+    eleventyConfig.addPassthroughCopy("src/**/*.txt");
+
+    const markdownItOptions = {
+        html: true,
+        linkify: true,
+        typographer: true
+    }
+
+    eleventyConfig.setLibrary("md", markdownIt(markdownItOptions))
+
 
     return {
         dir: {

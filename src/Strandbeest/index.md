@@ -1,11 +1,11 @@
 ---
-title: Strandbeest
+title: Making a Flexible Strandbeest
 layout: post.njk
 ---
 
-# Designing a Compliant Strandbeest
+# {{title}}
 
-_Updated 31 Aug 2022_
+_Updated 7 Sep 2022_
 
 
 The [Strandbeests](https://www.strandbeest.com/) are a family of kinetic sculptures developed by Theo Jansen.
@@ -42,14 +42,14 @@ I started using FreeCAD to sketch out ideas, using the contraint solver in the S
 I found that FreeCAD worked fine for my use case (I wasn't worryed about kinematics or dynamics at this point, I was looking for a mapping between crank angles and end effector position).
 FreeCAD has a python interface, so I wrote a script that would perodically change the angle of the input link.
 
-<figure>
+<div class="centre">
 <video controls>
 <source src="media/screencast.webm" type="video/webm">
 <source src="media/screencast.mp4" type="video/mp4">
 Video not supported
 </video>
 <figcaption>Elegance</figcaption>
-</figure>
+</div>
 
 I could then change the lengths of links as I watched the linkage cycle, observing how the charactaristics of the path of the foot changed. 
 Once I had something that more or less worked I wrote a second script that recorded the path of the foot as a set of coordinates, then changed the geometry of the foot, and repeated.
@@ -59,13 +59,13 @@ I replaced all the joints with flexures and filled the spaces between with rigid
 I attempted to run a FEM analyis using CalculiX in Freecad, applying different displacements to try and replicate the effect of the crank turning. The results aren't good, I suspect because the internal solver is linear. Notice how the pivot hole expands and contracts oddly.
 <div style="margin: auto; display: flex; gap: 5%">
 
-<video controls loop style="">
+<video autoplay loop style="">
 <source src="media/prbm.webm" type="video/webm">
 <source src="media/prbm.mp4" type="video/mp4">
 Video not supported
 </video>
 
-<video controls loop style="" >
+<video autoplay loop style="" >
 <source src="media/fem.webm" type="video/webm">
 <source src="media/fem.mp4" type="video/mp4">
 Video not supported
@@ -76,8 +76,9 @@ Video not supported
 
 
 ## The Printed Linkage
-I mirrored the linkage to make a part with two feet and one input and sent it off to a 3D printing service (I had to explain to them that I needed the flexures to be that thin, and that I would take the of risk them getting damaged in the post).
-Here is the final linkage in action.
+I mirrored the linkage to make a part with two feet with one input and sent it off to a 3D printing service.
+I did have to reassure them that I wanted the flexures to be that thin, and that I would take the of risk them getting damaged in the post.
+Here is the final linkage in action:
 
 <video controls loop>
 <source src="media/final.webm" type="video/webm">

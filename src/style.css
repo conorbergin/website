@@ -3,53 +3,47 @@
     src: "/fonts/CAT_Walthari.ttf";
 }
 
+
 body {
-    max-width: 768px;
-    margin: auto;
     font-family: 'Roboto Slab', serif;
-    background-size: 51px 51px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr min(70ch,100%) 2fr 3fr;
 }
 
-ul {
-    list-style-type: square;
-}
+body > * {grid-column: 2 / 5;}
+body > h2, h3, p, ul {grid-column: 3 / 4;}
 
+.centre {grid-column: 3/4;}
+.margin {display: grid; place-items: right;}
+
+/*
 header {
     font-family: 'UnifrakturCook', cursive;
     font-size: 80px;
     padding-left: 1%;
     padding-right: 3%;
-    background-color: antiquewhite;
-    /* border-bottom: 2px solid black; */
+    background-color: white;
+    border: 2px solid black;
     margin-top: 5px;
 
 }
-
-header a {
-    color: white;
-    text-decoration: none;
-}
-
-main {
-    padding: 2%;
-    background-color: white;
-}
+*/
 
 
-footer {
-    border-top: 2px solid black;
-    margin-bottom: 100px;
-    padding: 2%;
-}
 
 
 img {
     max-width: 100%;
+    display: block;
     height: auto;
 }
 
 figure {
-    font-style: italic;
+    font-weight: bold;
+    font-size: smaller;
+    text-align: center;
+    margin:0;
 }
 
 video {
