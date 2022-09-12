@@ -61,7 +61,6 @@ I attempted to run a FEM analyis using CalculiX in Freecad, applying different d
 
 <video controls loop style="">
 <source src="media/prbm.webm" type="video/webm">
-<source src="media/prbm.mp4" type="video/mp4">
 Video not supported
 </video>
 
@@ -81,7 +80,6 @@ I did have to reassure them that I wanted the flexures to be that thin, and that
 Here is the final linkage in action:
 
 <video controls loop>
-<source src="media/final.webm" type="video/webm">
 <source src="media/final.mp4" type="video/mp4">
 Video not supported
 </video>
