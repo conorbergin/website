@@ -59,13 +59,13 @@ I replaced all the joints with flexures and filled the spaces between with rigid
 I attempted to run a FEM analyis using CalculiX in Freecad, applying different displacements to try and replicate the effect of the crank turning. The results aren't good, I suspect because the internal solver is linear. Notice how the pivot hole expands and contracts oddly.
 <div style="display: flex; gap: 5%">
 
-<video autoplay loop style="">
+<video controls loop style="">
 <source src="media/prbm.webm" type="video/webm">
 <source src="media/prbm.mp4" type="video/mp4">
 Video not supported
 </video>
 
-<video autoplay loop style="" >
+<video controls loop style="" >
 <source src="media/fem.webm" type="video/webm">
 <source src="media/fem.mp4" type="video/mp4">
 Video not supported
