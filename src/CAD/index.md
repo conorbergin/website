@@ -1,12 +1,8 @@
 ---
 title: On CAD
+modified: 
 layout: post.njk
 ---
-
-# {{title}}
-
-_Updated 12th Sep 2022_
-
 
 With cheap 3D printers and PCB manufacturing services you could concieve a piece of hardware and almost have a physical prototype on your desk in the same week.
 CNC and laser cutting are also becoming cheaper and more available.

@@ -2,7 +2,12 @@
     font-family: "CAT Walzhari";
     src: "/fonts/CAT_Walthari.ttf";
 }
-
+@font-face {
+    font-family: "Friedolin";
+    src: url("/fonts/Friedolin.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
 
 body {
     font-family: 'Roboto Slab', serif;
@@ -15,7 +20,7 @@ body > * {grid-column: 2 / 5;}
 body > h2, h3, p, ul {grid-column: 3 / 4;}
 
 .centre {grid-column: 3/4;}
-.margin {display: grid; place-items: right;}
+.leftmargin {grid:column: 1 / 3}
 
 /*
 header {
@@ -43,7 +48,7 @@ figure {
     font-weight: bold;
     font-size: smaller;
     text-align: center;
-    margin:0;
+    margin: 5px;
 }
 
 video {

@@ -8,6 +8,7 @@ module.exports = function (eleventyConfig) {
 
     eleventyConfig.addPassthroughCopy("src/**/*.jpg");
     eleventyConfig.addPassthroughCopy("src/**/*.png");
+    eleventyConfig.addPassthroughCopy("src/**/*.webp");
     eleventyConfig.addPassthroughCopy("src/**/*.webm");
     eleventyConfig.addPassthroughCopy("src/**/*.mp4");
     eleventyConfig.addPassthroughCopy("src/**/*.ttf");
@@ -16,6 +17,7 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/**/*.svg");
     eleventyConfig.addPassthroughCopy("src/**/*.pdf");
     eleventyConfig.addPassthroughCopy("src/**/*.txt");
+    eleventyConfig.addPassthroughCopy("src/**/*.js");
 
     const markdownItOptions = {
         html: true,
