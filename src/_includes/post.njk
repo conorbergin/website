@@ -1,9 +1,9 @@
 ---
 layout: base.njk
+date: Last Modified
 ---
 
-
-<h1 style="font-family: 'Friedolin', cursive; font-size: 300%;"><a href="/" style=" text-decoration:none">Under Construction</a></h1>
 <h1>{{title}}</h1>
+<p style="font-family: monospace">Last Modified {{ page.date.toLocaleDateString() }}</p>
 
 {{ content | safe }}

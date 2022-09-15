@@ -1,13 +1,8 @@
 ---
 title: Making a Flexible Strandbeest
-modified: 12 Sep 2022
 layout: post.njk
 ---
 
-
-
-<canvas style="width:100%" id="canvas" width=1250 height=644 ><canvas>
-<script src="/main.js"></script>
 
 
 The [Strandbeests](https://www.strandbeest.com/) are a family of kinetic sculptures developed by Theo Jansen.
@@ -70,20 +65,16 @@ I replaced all the joints with flexures and filled the spaces between with rigid
 <figure class="centre"><img src="media/my-prbm.webp"><figcaption>Fig. 3</figure>
 
 I attempted to run a FEM analyis using CalculiX in Freecad, applying different displacements to try and replicate the effect of the crank turning. The results aren't good, I suspect because the internal solver is linear. Notice how the pivot hole expands and contracts oddly.
-<div style="display: flex; gap: 5%">
 
-<video controls loop style="">
-<source src="media/prbm.webm" type="video/webm">
-<source src="media/prbm.mp4" type="video/mp4">
-Video not supported
-</video>
-
-<video controls loop style="" >
-<source src="media/fem.webm" type="video/webm">
-<source src="media/fem.mp4" type="video/mp4">
-Video not supported
-</video>
-
+<div style="display:grid; grid-template-columns: 1fr 1fr">
+<figure>
+<canvas id="prbm" width=850 height=850></canvas>
+<figcaption>PRBM</figcaption>
+</figure>
+<figure>
+<canvas id="fem" width=1095 height=1095></canvas>
+<figcaption>FEM</figcaption>
+</figure>
 </div>
 
 
@@ -93,15 +84,18 @@ I mirrored the linkage to make a part with two feet with one input and sent it o
 I did have to reassure them that I wanted the flexures to be that thin, and that I would take the of risk them getting damaged in the post.
 Here is the final linkage in action:
 
-<figure >
-<video controls loop>
-<source src="media/final.webm" type="video/webm">
-<source src="media/final.mp4" type="video/mp4">
-Video not supported
-</video>
+<div>
 <figure>
+<canvas id="final" width=1250 height=644 ></canvas>
+<figcaption>Final</figcaption>
+</figure>
+</div>
 
 As you can see the parallel flexures buckle due to the torque on the foot from the link to the pivot.
 This is a limitation of using a PRBM, if I had found a better way of modelling the mechanism I might have been able to mitigate it.
 That being said it still works reasonably well.
 I never made a full Strandbeest using my mechanism, at this point I was completely sick of the project.
+
+
+
+<script src="flipbook.js"></script>

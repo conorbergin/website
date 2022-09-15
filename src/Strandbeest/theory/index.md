@@ -5,8 +5,6 @@ layout: post.njk
 
 # Beam theory
 
-_Updated 7th Sep 2022_
-
 You might have done an experiment in school with a spring, some weights and a ruler.
 You would've measured the length of the spring, then measured its length with some amount of weight hanging from it.
 If you did, you would have found that not only did the spring increase in length whenever another weight was added, but the increase in length was in proportion to the increase in weight, and when you unloaded the spring it would return to its original length.

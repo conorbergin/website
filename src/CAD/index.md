@@ -1,6 +1,5 @@
 ---
 title: On CAD
-modified: 
 layout: post.njk
 ---
 

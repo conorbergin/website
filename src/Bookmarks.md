@@ -1,8 +1,10 @@
 ---
-title: interesting websites
-layout: plaintext.njk
+title: Interesting Websites
+layout: post.njk
 ---
-
+<style>
+    table {grid-column: 3/5}
+</style>
 
 Here are a collection of website that I like, they all are simple, small and informative.
 
@@ -14,3 +16,4 @@ Here are a collection of website that I like, they all are simple, small and inf
 | janvwhite.org/    | Fonts                                                                    |
 | pakin.org/        | Stereograms, and a funny complaint generator                             |
 | peter-wiegel.de/  | Excellent historical fonts                                               |
+

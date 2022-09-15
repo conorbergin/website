@@ -13,14 +13,14 @@ body {
     font-family: 'Roboto Slab', serif;
 
     display: grid;
-    grid-template-columns: 1fr 1fr min(70ch,100%) 2fr 3fr;
+    grid-template-columns: 1fr 1fr min(80ch,100%) 2fr 3fr;
 }
 
 body > * {grid-column: 2 / 5;}
-body > h2, h3, p, ul {grid-column: 3 / 4;}
+body > h1, h2, h3, p, ul, canvas {grid-column: 3 / 4;}
 
 .centre {grid-column: 3/4;}
-.leftmargin {grid:column: 1 / 3}
+.leftmargin {grid-column: 1 / 3}
 
 /*
 header {
@@ -55,6 +55,8 @@ video {
     display: block;
     width: 100%;
 }
+
+canvas {width: 100%}
 
 /*
 @media (prefers-color-scheme: dark) {
