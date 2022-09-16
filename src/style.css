@@ -1,26 +1,15 @@
-@font-face {
-    font-family: "CAT Walzhari";
-    src: "/fonts/CAT_Walthari.ttf";
-}
-@font-face {
-    font-family: "Friedolin";
-    src: url("/fonts/Friedolin.ttf") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-}
 
-body {
-    font-family: 'Roboto Slab', serif;
 
+body {margin: 0px; padding:0px;    font-family: 'Roboto Slab', serif;}
+header{ margin:0px; padding: 0px; color: white; overflow:hidden;}
+main {
+    padding: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr min(80ch,100%) 2fr 3fr;
 }
 
-body > * {grid-column: 2 / 5;}
-body > h1, h2, h3, p, ul, canvas {grid-column: 3 / 4;}
-
-.centre {grid-column: 3/4;}
-.leftmargin {grid-column: 1 / 3}
+main > * {grid-column: 2 / 5;}
+main > a, h1, h2, h3, p, ul, canvas {grid-column: 3 / 4;}
 
 /*
 header {

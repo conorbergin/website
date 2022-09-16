@@ -6,7 +6,7 @@ layout: post.njk
 With cheap 3D printers and PCB manufacturing services you could concieve a piece of hardware and almost have a physical prototype on your desk in the same week.
 CNC and laser cutting are also becoming cheaper and more available.
 More people are getting involved with small scale manufacturing.
-The sort of person that buys a 3D printer is just as likely to have a programming hobby as they are to be handy.
+The sort of person that buys a 3D printegr is just as likely to have a programming hobby as they are to be handy.
 It is quite common to see hardware projects on github that have the firmware source code, STLs for the 3D printed portion, and Gerber files for the PCB.
 To assemble them you need to be able to solder, glue and operate a screwdriver.
 

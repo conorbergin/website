@@ -3,8 +3,6 @@ title: Beam Theory
 layout: post.njk
 ---
 
-# Beam theory
-
 You might have done an experiment in school with a spring, some weights and a ruler.
 You would've measured the length of the spring, then measured its length with some amount of weight hanging from it.
 If you did, you would have found that not only did the spring increase in length whenever another weight was added, but the increase in length was in proportion to the increase in weight, and when you unloaded the spring it would return to its original length.
@@ -18,12 +16,4 @@ And it doesn't need to literally be a spring, you could look at the compression 
 
 What about things that bend sideways?
 
-There are various ways to derive this.
-I will simply postulate: The amount of bending at a point in the beam should be proportional to the moment at that point.
-We can discretize our 1-D beam with a series of segments, the angle of the segmnet is 
-How do we simulate them?
-
-* Julia
-* CAlculix
-* Handrolled
-
+TBC
