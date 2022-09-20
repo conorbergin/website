@@ -4,33 +4,26 @@ layout: post.njk
 ---
 
 With cheap 3D printers and PCB manufacturing services you could concieve a piece of hardware and almost have a physical prototype on your desk in the same week.
-CNC and laser cutting are also becoming cheaper and more available.
-More people are getting involved with small scale manufacturing.
-The sort of person that buys a 3D printegr is just as likely to have a programming hobby as they are to be handy.
-It is quite common to see hardware projects on github that have the firmware source code, STLs for the 3D printed portion, and Gerber files for the PCB.
-To assemble them you need to be able to solder, glue and operate a screwdriver.
+It is quite common to see hardware projects on github that contain firmware source code, STLs for 3D printed parts, and Gerber files for PCBs.
+To assemble such a device you need to be able to solder, use a hot-glue gun, and operate a screwdriver.
 
-This new sort of manufacturing is very much inline with the hacker tradition.
+This new sort of manufacturing is as accessable to a hobbyist as it is to a corporation.
+I have found ergonomic computer keyboards, RC car parts, fountain pen feeds, and parts for 3D printers themselves.
+It is worth noting that these projects rarely limit themselves to 3D printing, usually they interface with something else, or just function as a case for some electronics.
+
+
+If you do not feel like writing the g-code yourself, you will need a 3D CAD program to generate the goemetry, and a slicer (CURA, Slic3r) to convert it into layers for the 3D printer.
 
 ## Defining Terms
-CAD packages are defined by their underlying data structures.
-2D CAD is relatively simple, all they are are specialized vector editiors.
-3D CAD is a step up in complexity. 3D CAD will usually have a facility for making 2D sketches.
+3D CAD packages are defined by their underlying data structures.
 
-Complex solid models can be built using Constructive Solid Geometry (CSG), which is simply a tree of boolean operations, or Binary Representation (B-Rep), which relates individual surfaces to one another.
-
-## Availability
-Before you even open a program there are a few things that make your life much easier:
-Cross platform -- most CAD packages exclusively run on Windows, a select few also run on macOS and almost none run on Linux. There is no guarantee that someone doing engineering work is running Windows, many programmers prefer macOS and Linux.
-Easy to purchase -- that means being able to get a copy of the software for free or at a fair price without having to jump through a buch of hoops.
-Easy to install -- doesn't take hours to install.
-
+Solid geometry can be built using Constructive Solid Geometry (CSG), which is a tree of boolean operations, or Binary Representation (B-Rep), which relates individual surfaces to one another.
 
 ## Comparison
 
 I decided to do a small comparison of the various CAD programs available to me on Linux.
 I made the same part in each, from the [2001 Model Mania](https://blogs.solidworks.com/tech/2022/02/23-years-of-model-mania.html).
-This is hardly science, but by timing myself I did get a better idea of how efficient I was in each program.
+
 
 The model is fairly straight forward, but for fact that two important dimensions are not given, but have to be calculated.
 There is a dimension for the angle of the bend, but no dimension for the extrustion from the base to the end, there is also no dimension for the section after the bend.
@@ -91,7 +84,6 @@ Not being able to just click on a point to constrain it to another point, having
 
 ## Conclusion
 
-The best option for someone looking to learn a CAD is propietary software like OnShape, Fusion 360 or Solidworks.
-OnShape is particulary attractive because it runs in the browser, and does all the heavy lifting on its own servers, and has a free tier.
-The next best option is FreeCAD.
-It's slow, finicky and has less features, but it works.
+OnShape is to FreeCAD as FreeCAD is to Solvespace.
+FreeCAD is completely usable for simple work.
+
