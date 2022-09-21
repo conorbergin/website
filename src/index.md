@@ -3,11 +3,11 @@ title: Conor Bergin's Blog
 layout: post.njk
 ---
 
-## Engineering
+### Engineering
 - [Making a Flexible Strandbeest](/Strandbeest)
 - [On CAD](/CAD)
 
-## Other
+### Other
 - [Interesting Websites](/Bookmarks)
 
 

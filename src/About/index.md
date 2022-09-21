@@ -3,8 +3,13 @@ title: About
 layout: post.njk
 ---
 
+Welcome to my website.
 
-I am a graduate engineer looking for gainful employment in London.
+I built it with Eleventy and hosted it on Netlify, all quite painless.
+
+If you wish to contact me about what I write here you can email me using myname@protonmail.com.
+
+Incidently, I am currently looking for work in London.
 
 
 
