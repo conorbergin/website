@@ -1,12 +1,21 @@
 
 
 body {margin: 0px; padding:0px;    font-family: 'Roboto Slab', serif;}
-header{ margin:0px; padding: 0px; color: white; overflow:hidden;}
+header{ 
+    display: grid;
+    grid-template-columns: 2fr min(80ch,100%) 5fr;
+    margin:0px; padding: 0px;
+}
 main {
     padding: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr min(80ch,100%) 2fr 3fr;
 }
+
+header > * {grid-column: 2/3;}
+
+nav a {color:black; display: inline-block;padding: 8px;}
+
 
 main > * {grid-column: 2 / 5;}
 main > a, h1, h2, h3, p, ul, canvas {grid-column: 3 / 4;}

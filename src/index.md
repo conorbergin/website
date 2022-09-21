@@ -1,6 +1,6 @@
 ---
 title: Conor Bergin's Blog
-layout: base.njk
+layout: post.njk
 ---
 
 ## Engineering
@@ -10,8 +10,4 @@ layout: base.njk
 ## Other
 - [Interesting Websites](/Bookmarks)
 
-
-<div style="width: 240px; justify-self: end">
-<img src="mascot.png">
-</div>
 
