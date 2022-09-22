@@ -28,8 +28,7 @@ Fortunately, you can make a pretty good approximation of a flexure with linear s
 The most obvious PRBM is to model a small flexure as a single torsional spring in the middle.
 
 
-
-<figure class="centre">
+<figure>
 <img src="media/prbm-examples.webp">
 <figcaption>Fig. 1</figcaption>
 </figure>
