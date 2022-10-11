@@ -1,6 +1,6 @@
 ---
 title: My Cousin, the Coackroach
-layout: post.njk
+layout: post.njkgit 
 ---
 
 I just saw a cockroach in my kitchen.
@@ -9,7 +9,7 @@ First, hope that it was a bit of cockroach shaped debris.
 Second, it was at least another sort of insect. 
 Third, fear and disgust, I was a fascist and the cockroach was a cockroach.
 I tried to kill it with a brush, I failed.
-I thought, sardonically, that me an the cockroach were related, somehow.
+I thought, sardonically, that me and the cockroach were related, somehow.
 How could I be related to a stupid, verminous, insect?
 
 But of course I am.
