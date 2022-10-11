@@ -4,20 +4,19 @@ body {margin: 0px; padding:0px;    font-family: 'Roboto Slab', serif;}
 header{ 
     display: grid;
     grid-template-columns: 2fr min(85ch,100%) 3fr;
-    margin:0px; padding: 8px;
+
 }
 main {
-    padding: 8px;
     display: grid;
     grid-template-columns: 2fr min(85ch,100%) 3fr;
 }
 
-header > * {grid-column: 2/3;}
+header > * {grid-column: 2/3; padding: 0px 10px}
 
 nav a {color:black; display: inline-block;padding-right: 10px;}
 
 
-main > * {grid-column: 2 / 3;}
+main > * {grid-column: 2 / 3; padding: 0px 10px;}
 main > a, h1, h2, h3, p, ul, canvas {grid-column: 2 / 3;}
 
 /*
@@ -33,7 +32,7 @@ header {
 }
 */
 
-
+li {min-width: 0px;}
 
 
 img {

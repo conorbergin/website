@@ -7,7 +7,7 @@ Here are a collection of website that I like, they all are simple, small and inf
 
 |                   |                                                                          |
 | ----------------- | ------------------------------------------------------------------------ |
-| 7.62x54r.net/     | A mosin nagant reference                                                 |
+| 7.62x54r.net/     | A Mosin-Nagant reference                                                 |
 | sheldonbrown.com/ | Information about old bicycles, great if you're doing a fixie conversion |
 | paulbourke.net/   | Computer graphics, fractals, etc                                         |
 | janvwhite.org/    | Fonts                                                                    |
@@ -18,6 +18,6 @@ Youtube Channels
 
 |                                      |                                     |
 | ------------------------------------ | ----------------------------------- |
-| youtube.com/c/BadObsessionMotorsport | Project Binky, the GOAT Car Project |
-| youtube.com/c/SuperfastMatt          | Car projects, good Engineering      |
+| youtube.com/c/BadObsessionMotorsport | Project Binky, the GOAT car project |
+| youtube.com/c/SuperfastMatt          | Car projects, good engineering      |
 
