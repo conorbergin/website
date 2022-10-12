@@ -1,6 +1,6 @@
 ---
 title: My Cousin, the Coackroach
-layout: post.njkgit 
+layout: post.njk
 ---
 
 I just saw a cockroach in my kitchen.
