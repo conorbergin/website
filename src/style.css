@@ -1,23 +1,46 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    font-family: 'Roboto Slab', serif;
+}
 
-
-body {margin: 0px; padding:0px;    font-family: 'Roboto Slab', serif;}
-header{ 
+header {
     display: grid;
-    grid-template-columns: 2fr min(85ch,100%) 3fr;
+    grid-template-columns: 2fr min(85ch, 100%) 3fr;
 
 }
+
 main {
     display: grid;
-    grid-template-columns: 2fr min(85ch,100%) 3fr;
+    grid-template-columns: 2fr min(85ch, 100%) 3fr;
 }
 
-header > * {grid-column: 2/3; padding: 0px 10px}
+header>* {
+    grid-column: 2/3;
+    padding: 10px 10px 50px
+}
 
-nav a {color:black; display: inline-block;padding-right: 10px;}
+nav a {
+    color: black;
+    display: inline-block;
+    padding-right: 10px;
+}
 
 
-main > * {grid-column: 2 / 3; padding: 0px 10px;}
-main > a, h1, h2, h3, p, ul, canvas {grid-column: 2 / 3;}
+main>* {
+    grid-column: 2 / 3;
+    padding: 0px 10px;
+}
+
+main>a,
+h1,
+h2,
+h3,
+p,
+ul,
+canvas {
+    grid-column: 2 / 3;
+}
 
 /*
 header {
@@ -32,7 +55,9 @@ header {
 }
 */
 
-li {min-width: 0px;}
+li {
+    min-width: 0px;
+}
 
 
 img {
@@ -53,7 +78,9 @@ video {
     width: 100%;
 }
 
-canvas {width: 100%}
+canvas {
+    width: 100%
+}
 
 /*
 @media (prefers-color-scheme: dark) {
