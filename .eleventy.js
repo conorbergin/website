@@ -18,6 +18,7 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/**/*.pdf");
     eleventyConfig.addPassthroughCopy("src/**/*.txt");
     eleventyConfig.addPassthroughCopy("src/**/*.js");
+    eleventyConfig.addPassthroughCopy("src/**/*.csv");
 
     const markdownItOptions = {
         html: true,
