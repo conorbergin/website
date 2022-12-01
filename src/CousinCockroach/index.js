@@ -22,7 +22,7 @@ const chart2 = d3.select("#chart2")
 
 d3.tsv(dataset).then((data) => {
 
-    data = data.filter(d => (d['Adult weight (g)'] > 1 && d['Female maturity (days)'] > 1 && d['Data quality'] == "high"));
+    data = data.filter(d => (d['Adult weight (g)'] > 1 && d['Female maturity (days)'] > 1 && d['Data quality'] != "questionable"));
     data.forEach( element => console.log(element['Common name']))
         
 
@@ -39,7 +39,7 @@ d3.tsv(dataset).then((data) => {
     chart1.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x)).call(g => g.select(".domain").remove());
     chart1.append("g").call(d3.axisLeft(y)).call(g => g.select(".domain").remove());
 
-    const tip = chart1.append("text").attr("x",100).attr("y", 0).attr("text-anchor", "left").style("font-family", "sans-serif").style("font-size", "10px").text("");
+    const tip = chart1.append("text").attr("x",width - 150).attr("y", height - 20).attr("text-anchor", "right").style("font-family", "sans-serif").style("font-size", "10px").text("");
 
     chart1.append("g")
         .selectAll("dot")
@@ -53,7 +53,7 @@ d3.tsv(dataset).then((data) => {
         .style("stroke-weight", 5)
         .style("fill-opacity", "0")
         .on("mouseover", (e,d) => {
-            tip.text(d["Common name"] + " " + d["Class"]);
+            tip.text(d["Common name"]);
             tip.style("opacity", 1);
         })
         .on("mouseout", () => tip.style("opacity", 0));

@@ -5,11 +5,11 @@ layout: post.njk
 
 I just saw a cockroach in my kitchen.
 Initially, I hoped I was looking at a bit of cockroach shaped debris -- or at least some other sort of insect.
-Then, afraid and disgusted, I had to face the fact I had 
+Afraid and disgusted, I had to accept I was looking at the real thing.
 
-And then I was struck by the fact I was related to the cockroach. Obviously I would not expect to find any members of the cockroach clan in old census data or family records, but we are both bilaterally symmetrical animals that reproduce sexually, we are hardly alien. If you go back far enough we have a common ancestor, making us very distant cousins.
+And then I was struck by the fact I was related to the cockroach. Obviously I would not expect to find any members of the cockroach clan in old census data or family records, but we are both bilaterally symmetrical animals that reproduce sexually. If you go back far enough we have a common ancestor, making us very distant cousins.
 
-I tried to squash it with a broom, but I was too slow, the cockroach scuttled under a cupboard. Feeling ambivalent about my failure, I wondered if our relationship could be quantified.
+I tried to squash it with a broom, but I was too slow, and the cockroach scuttled under a cupboard. Feeling ambivalent about my failure, I wondered if our relationship could be quantified.
 
 ## Ancestry
 
@@ -50,11 +50,18 @@ Invertebrates are more difficult to make assured statements about because they a
 
 
 What data do we have that will help us work out the generation time of long extint animals?
-I had a look around for an apropiate database, and settled on AnAge. It can be downloaded as a TSV, and seems to be the most recent.
+I had a look around for an apropiate database, and settled on AnAge. It can be downloaded as a TSV, and seems to be the most comprehensive, using data from smaller, previous works and evauating the quality of the data.
+It's pretty bereft of non-vertebrate entries, So I will have to look elsewhere for my cockroach data.
+
+There are entries for female and male maturity, longevity, litter/clutch size and frequency, but no figure for generation time, so we will have to derive that ourselves.
+
+According to the [wikipedia page](https://en.wikipedia.org/wiki/Generation_time), there are several interpretations of generation time, the one I mean to use is the average distance between parents and children. I should be able to take that number, and multiply it by a length of time, to get an estimate of how many generations have passed in some population over some period.
+
+
 
 <div id="chart1"></div>
 
-# hello
+
 
 <div id="chart2"></div>
 
@@ -69,9 +76,17 @@ I had a look around for an apropiate database, and settled on AnAge. It can be d
 
 <small>
 
-[1] https://www.researchgate.net/publication/7804161_Generation_Time_A_Reliable_Metric_to_Measure_Life-History_Variation_among_Mammalian_Populations
+[1] Generation Time: A Reliable Metric to Measure Life‐History Variation among Mammalian Populations https://doi.org/10.1086/430330
 
-[2] 
+This one contains a chart comparing different speicies 
+
+[2] Generation length for mammals https://doi.org/10.3897/natureconservation.5.5734
+
+Low quality data with less accurate model of generation time
+
+[3] Female and male life tables for seven wild primate species https://doi.org/10.1038/sdata.2016.6 dataset:https://doi.org/10.5061/dryad.v28t5
+
+High quality data with accurate model of generation time
 
 </small>
 <script src="https://d3js.org/d3.v7.min.js"></script>
