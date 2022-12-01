@@ -18,6 +18,6 @@ Youtube Channels
 
 |                                      |                                     |
 | ------------------------------------ | ----------------------------------- |
-| youtube.com/c/BadObsessionMotorsport | Project Binky, the GOAT car project |
-| youtube.com/c/SuperfastMatt          | Car projects, good engineering      |
-
+| youtube.com/@BadObsessionMotorsport | Project Binky, the GOAT car project |
+| youtube.com/@SuperfastMatt          | Car projects, good engineering      |
+| https://www.youtube.com/@KnitFactoryImpl | Knitting machines |
