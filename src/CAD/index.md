@@ -84,7 +84,7 @@ That being said, solvespace is so much less clunky than FreeCAD, arguabley OnSha
 
 ### OpenSCAD
 
-2:12:30
+1:02:16
 
 This is a CSG that uses a DSL to define its models.
 The language itself is quite nice to use, but the kernel is severly limited.
@@ -97,8 +97,12 @@ Filleting is completely out of the question, you can make a rectangle with round
 
 ### CADQuery
 
-CADQuery is another code based CAD, but this time leveraging OpenCascade, the same kernel FreeCAD uses, and Python.
-It is less mature than OpenSCAD, its primary competitor, and is a bit unpleasant to install (like so many Python projects).
+CADQuery is another script based CAD, but this time leveraging OpenCascade, the same kernel FreeCAD uses, and using Python rather than its own domain specific language.
+It is less mature than OpenSCAD, its primary competitor, and is a bit of a pain to install.
+If you want the latest version with the sketch subsytem, you need to use this github action.
+The sketch subsystem crashed on me, so it might be best to wait for an official release before you use it.
+The releases are distributed as a zip archive or a miniforge package.
+I don't want anything to do with conda so I used the zip archive.
 
 It does have some advantages over OpenSCAD, it uses a B-Rep kernel, and it uses python. So while it is less mature, it should be much less limited.
 

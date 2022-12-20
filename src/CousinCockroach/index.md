@@ -5,11 +5,14 @@ layout: post.njk
 
 I just saw a cockroach in my kitchen.
 Initially, I hoped I was looking at a bit of cockroach shaped debris -- or at least some other sort of insect.
-Afraid and disgusted, I had to accept I was looking at the real thing.
+Disgusted and a bit afraid, I had to accept I was looking at the real thing.
 
-And then I was struck by the fact I was related to the cockroach. Obviously I would not expect to find any members of the cockroach clan in old census data or family records, but we are both bilaterally symmetrical animals that reproduce sexually. If you go back far enough we have a common ancestor, making us very distant cousins.
+It then occured to me that because we shared a common ancestor we were both in each others extended families.
+This is obvious, of course, but I was amused by the fact that we are literally related.
 
-I tried to squash it with a broom, but I was too slow, and the cockroach scuttled under a cupboard. Feeling ambivalent about my failure, I wondered if our relationship could be quantified.
+The cockroach is some sort of _nth_ cousin _m_ times removed to me.
+
+I tried to squash it with a broom, but I was too slow, and the cockroach scuttled under a cupboard. Feeling ambivalent about my failure, I wondered what _n_ and _m_ are.
 
 ## Ancestry
 
