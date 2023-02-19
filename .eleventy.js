@@ -2,7 +2,9 @@
 
 // const mathjaxPlugin = require("eleventy-plugin-mathjax");
 const markdownIt = require("markdown-it")
+const markdownItPrism = require("markdown-it-prism")
 // const markdownItAnchor = require("markdown-it-anchor")
+
 
 module.exports = function (eleventyConfig) {
 
@@ -18,6 +20,9 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/**/*.pdf");
     eleventyConfig.addPassthroughCopy("src/**/*.txt");
     eleventyConfig.addPassthroughCopy("src/**/*.js");
+    eleventyConfig.addPassthroughCopy("src/**/*.csv");
+
+
 
     const markdownItOptions = {
         html: true,
@@ -26,6 +31,7 @@ module.exports = function (eleventyConfig) {
     }
 
     eleventyConfig.setLibrary("md", markdownIt(markdownItOptions))
+    eleventyConfig.amendLibrary("md", mdLib => mdLib.use(markdownItPrism))
 
 
     return {
