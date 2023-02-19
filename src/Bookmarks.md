@@ -3,7 +3,7 @@ title: Bookmarks
 layout: post.njk
 ---
 
-Here are a collection of website that I like, they all are simple, small and informative.
+ Websites
 
 |                   |                                                                          |
 | ----------------- | ------------------------------------------------------------------------ |
@@ -22,4 +22,4 @@ Youtube Channels
 | youtube.com/@KnitFactoryImpl        | Knitting machines                   |
 | youtube.com/@Clickspring            | Clockmaking                         |
 
-Non Fiction
+

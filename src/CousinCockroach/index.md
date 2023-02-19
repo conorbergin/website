@@ -1,5 +1,5 @@
 ---
-title: *DRAFT* My Cousin, the Cockroach *DRAFT*
+title: DRAFT My Cousin, the Cockroach
 layout: post.njk
 ---
 
