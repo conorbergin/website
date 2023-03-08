@@ -56,20 +56,14 @@ canvas {
     margin: 12px 0px;
 }
 
-/*
-header {
-    font-family: 'UnifrakturCook', cursive;
-    font-size: 80px;
-    padding-left: 1%;
-    padding-right: 3%;
-    background-color: white;
-    border: 2px solid black;
-    margin-top: 5px;
-}
-*/
 
 li {
     min-width: 0px;
+}
+
+ul, ol {
+    margin-left: 0;
+    padding-left: 30px;
 }
 
 
