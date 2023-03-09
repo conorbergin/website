@@ -1,6 +1,6 @@
 ---
 title: Bookmarks
-layout: post.njk
+layout: base.njk
 ---
 
  Websites

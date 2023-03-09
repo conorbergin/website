@@ -1,6 +1,6 @@
 ---
 title: About
-layout: post.njk
+layout: base.njk
 ---
 
 Welcome to my website.
@@ -13,6 +13,6 @@ Incidentally, I am currently looking for work in London.
 
 
 
-<div style="width: 240px; justify-self: end">
+<div style="width: 240px; justify-self: end; margin-right: -140px">
 <img src="mascot.png">
 </div>

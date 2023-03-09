@@ -7,7 +7,7 @@ body {
 header  {
     display: grid;
     grid-template-columns: 2fr min(85ch, 100%) 3fr;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 
@@ -18,11 +18,11 @@ main {
 
 header>* {
     grid-column: 2/3;
-    padding: 10px 10px 20px;
+    padding: 10px 10px 10px;
 }
 
 nav a {
-    color: rgb(54, 54, 54);
+    color: rgb(0, 0, 0);
     display: inline-block;
     padding-right: 10px;
     text-decoration: none;
@@ -30,6 +30,11 @@ nav a {
 
 main a {
     text-decoration: none;
+}
+
+nav a.active {
+    color: rgb(80, 80, 80);
+
 }
 
 pre {
@@ -55,6 +60,10 @@ canvas {
     grid-column: 2 / 3;
     margin: 12px 0px;
 }
+
+h1 { font-size: 140%;}
+h2 { font-size: 110%;}
+h3 { font-size: 100%;}
 
 
 li {
