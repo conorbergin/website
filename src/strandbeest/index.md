@@ -3,7 +3,7 @@ title: Making a Flexible Strandbeest
 layout: post.njk
 ---
 
-
+_22 Sep 2022 -- Adapted from a University Project_
 
 The [Strandbeests](https://www.strandbeest.com/) are a family of kinetic sculptures developed by Theo Jansen.
 At their centre is a linkage which is responsible for their organic gait.
@@ -26,16 +26,6 @@ I won't bore you with the theory, if you are interested I've detailed my adventu
 
 Fortunately, you can make a pretty good approximation of a flexure with linear springs and links, called the Pseudo-Rigid-Body Model (PRBM). They are explained in Chapter 5 of _Compliant Mechanisms_.
 The most obvious PRBM is to model a small flexure as a single torsional spring in the middle.
-
-
-<figure>
-<img src="media/prbm-examples.webp">
-<figcaption>Fig. 1</figcaption>
-</figure>
-
-In Fig. 1 we see three simple flexures operating in tandem with their PRBM equivalent.
-A has a very short flexure, so the PRBM is accurate through a large range of motion, B and C have much longer flexures, so the PRBMs are only accurate through a range of about 90 degrees.
-The value of a, used to determine the position of the pivot in B and C, is a empirically derived number.
 
 ## Using FreeCAD to Design Linkages
 

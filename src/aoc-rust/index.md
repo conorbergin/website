@@ -3,17 +3,21 @@ title: Advent of Code 2022 in Rust
 layout: post.njk
 ---
 
+_8 Mar 2022_
+
 This is the third year I have attempted AoC, and the first time I have finished it. Last year I used Julia, which I think is actually pretty close to perfect for this sort of thing, it has an REPL, linear algebra in the standard library and a clever JIT compiler that can produce code about as performant traditional compiled languages, much more convieniently. This year I wanted to write readable, performant, and robust code, and Rust seems to me the best language for that job. Did I succeed? No. Some of my solutions are nice, some are really not. I didn't do much clean up work, once I reached the mid forties my enthusiam started to wane.
 
 Rust is great, as long as you don't write too much of it. I didn't have many problems with the borrow checker becuase I didn't allocate much. The inconvinience of moving data structurea around forced me to think about what I was actually trying to do with my code.
 
-I used itertools a lot, the iproduct! macro in particular to avoid writing nested for loops.
+I used ```itertools``` a lot, the `iproduct!` macro in particular to avoid writing nested for loops.
 
 ### Day 22 part 2
 
 This was perhaps the hardest problem of the year. Given a map, which was also the net of a cube, follow a route, and at every edge, wrap to the matching edge if the net were folded. One solution which was common on reddit was to hardcode the transitions of your net, but there was mutiple possible nets, my test input and puzzle input were different. I couldn't find much information about cube nets, and what I did find was in the format of worksheets for young children being introduced to maths. Which is odd, because it is an interesting problem.
 
-![](Cube_net_pic.png)
+<figure>
+<img src="Cube_net_pic.png">
+</figure>
 
 There are eleven unique cube nets, ten are 3x4 and one is 2x5. I would be possible to check if your input was one of these valid nets and then hardcode the transitions for each one. This would be robust and very verbose.
 

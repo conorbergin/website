@@ -1,8 +1,6 @@
 
 
-// const mathjaxPlugin = require("eleventy-plugin-mathjax");
 const markdownIt = require("markdown-it")
-const markdownItPrism = require("markdown-it-prism")
 // const markdownItAnchor = require("markdown-it-anchor")
 
 
@@ -26,12 +24,12 @@ module.exports = function (eleventyConfig) {
 
     const markdownItOptions = {
         html: true,
-        linkify: true,
         typographer: true
     }
 
     eleventyConfig.setLibrary("md", markdownIt(markdownItOptions))
-    eleventyConfig.amendLibrary("md", mdLib => mdLib.use(markdownItPrism))
+    eleventyConfig.amendLibrary("md", mdLib => mdLib.use(require('markdown-it-prism'))
+                                                    .use(require('markdown-it-deflist')))
 
 
     return {

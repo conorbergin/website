@@ -1,12 +1,12 @@
 ---
 title: Conor Bergin's Blog
-layout: post.njk
+layout: base.njk
 ---
 
+[Compliant Keyboard Switches Pt 1](/keyswitches)
 
-[Advent of Code 2022 in Rust](/AOC-Rust)
+[Advent of Code 2022 in Rust](/aoc-rust)
 
-[Making a Flexible Strandbeest](/Strandbeest)
+[On CAD](/cad)  
 
-[On CAD](/CAD)  
-
+[Making a Flexible Strandbeest](/strandbeest)
