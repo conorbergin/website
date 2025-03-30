@@ -1,8 +1,9 @@
 ---
 title: "Building a contenteditable Text Editor from Scratch"
-layout: post.njk
+layout: post.liquid
+tags: blog
+date: 2023-09-19
 ---
-_19 Sep 2023_
 
 Around March this year I decided I was going to build a note-taking app, having never been quite satisfied with what was on offer. I wanted something secure, convenient and open. In order to be convenient a notes app must have first class sync support and designed with smartphones in mind. In order to be secure it must be self-hosted or the data must be encrypted client-side.
 

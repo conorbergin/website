@@ -1,0 +1,16 @@
+---
+title: Essays
+layout: base.liquid
+---
+
+<p>Here is my longer form writing, I will try to keep these up to date.</p>
+
+  </p>
+  {%- for post in collections.essays reversed -%}
+    <p>
+  
+      <a href="{{ post.url }}">{{ post.data.title }}</a>
+      <br/>
+      <code>{{post.date | date: "%d %b %Y" }}</code>
+    </p>
+  {%- endfor -%}

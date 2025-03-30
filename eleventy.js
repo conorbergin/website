@@ -1,6 +1,6 @@
 
 
-const markdownIt = require("markdown-it")
+// const markdownIt = require("markdown-it")
 // const markdownItAnchor = require("markdown-it-anchor")
 
 
@@ -20,19 +20,33 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/**/*.js");
     eleventyConfig.addPassthroughCopy("src/**/*.csv");
 
+	// Use the default sorting algorithm in reverse (descending dir, date, filename)
+	// Note that using a template engine’s `reverse` filter might be easier here
+	eleventyConfig.addCollection("myPostsReverse", function (collectionsApi) {
+		return collectionsApi.getAllSorted().reverse();
+	});
 
 
-    const markdownItOptions = {
-        html: true,
-        typographer: true
-    }
+    eleventyConfig.addFilter("niceDate",function(date) {
+        const d = new Date(date)
+        return d.toDateString()
+    })
 
-    eleventyConfig.setLibrary("md", markdownIt(markdownItOptions))
-    eleventyConfig.amendLibrary("md", mdLib => mdLib.use(require('markdown-it-prism'))
-                                                    .use(require('markdown-it-deflist')))
+
+
+
+    // const markdownItOptions = {
+    //     html: true,
+    //     typographer: true
+    // }
+
+    // eleventyConfig.setLibrary("md", markdownIt(markdownItOptions))
+    // eleventyConfig.amendLibrary("md", mdLib => mdLib.use(require('markdown-it-prism'))
+    //     .use(require('markdown-it-deflist')))
 
 
     return {
+        markdownTemplateEngine: "njk",
         dir: {
             input: "src"
         }

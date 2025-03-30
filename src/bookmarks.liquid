@@ -1,0 +1,25 @@
+---
+title: Bookmarks
+layout: base.liquid
+---
+
+
+
+<p>For posterity, a list of websites I like. There is a separate section for Youtube channels.</p>
+
+
+{% for link in bookmarks %}
+  <p>
+
+    <a href="{{ link.url }}">{{ link.url }}</a>
+    <br/>
+    {{link.desc}}
+    </p>
+
+{% endfor %}
+
+
+{% comment %} {
+    "url": "https://paulbourke.net",
+    "desc": "Computer Graphics"
+}, {% endcomment %}

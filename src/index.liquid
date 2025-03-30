@@ -1,0 +1,19 @@
+---
+title: Conor Bergin's Blog
+layout: base.liquid
+---
+
+{% comment %} <h1>Conor Bergin's Blog</h1> {% endcomment %}
+
+<p>Hi, I am an Engineer of sorts.</p>
+
+<h2>Recent posts</h2>
+
+{%- for p in collections.recent reversed -%}
+    <a href={{p.url}}>{{p.data.title}}</a>
+    <br>
+{%- endfor -%}
+
+<h2>About Me</h2>
+
+I am an 

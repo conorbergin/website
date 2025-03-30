@@ -1,43 +1,105 @@
 :root {
-    color-scheme: light dark
-}
+    /* Default color scheme variables */
+    color-scheme: light dark;
+
+    --ss : "Atkinson Hyperlegible Next";
+    --ms : "Atkinson Hyperlegible Mono";
+
+    font-family: var(--ss);
+    line-height: 1.5;
+  
+    /* Light mode colors */
+    --background-light: white;
+    --text-light: black;
+    
+    /* Dark mode colors */
+    --background-dark: #222;
+    --text-dark: white;
+  
+    /* Base colors that will automatically invert */
+    --bg: var(--background-light);
+    --fg: var(--text-light);
+    
+    /* Opposite colors (for elements like navbar) */
+    --bgo: var(--background-dark);
+    --fgo: var(--text-dark);
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: var(--background-dark);
+      --fg: var(--text-dark);
+      
+      /* In dark mode, these will flip */
+      --bgo: var(--background-light);
+      --fgo: var(--text-light);
+    }
+  }
 
 body {
+
+    background-color: var(--bg);
+    color: var(--fg);
     /* font-family: monospace; */
 
     margin: auto;
-    padding: 10px;
     max-width: 70ch;
 }
 
-main { font-family: serif}
+#eyes {
+    font-family: var(--ms);
+}
+
 
 header  {
     margin-bottom: 20px;
 }
 
+nav {
+    /* font-family: var(--ms); */
+    font-weight: 400;
+    margin-top: 1rem;
+}
+
 
 nav a {
     text-decoration: none;
-    color: inherit;
+    color: var(--bg);
+    background-color: var(--fg);
+    padding: 0.1rem 0.3rem;
+
 }
 
-main a {
-    color: inherit;
+.active {
+    color: var(--fg);
+    background-color: var(--bg);
 }
 
+main {
+    padding: 0 0.3rem;
+}
+
+code {
+    font-family: var(--ms);
+}
 
 pre {
-    background-color: antiquewhite;
-    padding: 20px !important;
-    border-radius: 10px;
+    font-family: var(--ms);
+    /* background-color: antiquewhite; */
+    /* padding: 20px !important; */
+    /* border-radius: 10px; */
 
 }
 
+h1, h2, h3, h4, h5, h6 {
+    /* font-family: var(--ms); */
+}
 
-h1 { font-size: 140%;}
-h2 { font-size: 110%;}
-h3 { font-size: 100%;}
+
+/* h1 { font-size: 140%;} */
+/* h2 { font-size: 110%;} */
+/* h3 { font-size: 100%;} */
 
 
 
@@ -63,6 +125,7 @@ canvas {
     width: 100%
 }
 
-footer {
-    padding-top: 200px;
+
+hr {
+    color: var(--fg);
 }

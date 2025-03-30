@@ -1,9 +1,9 @@
 ---
 title: Advent of Code 2022 in Rust
-layout: post.njk
+layout: post.liquid
+tags: blog
+date: 2023-03-08
 ---
-
-_8 Mar 2022_
 
 This is the third year I have attempted AoC, and the first time I have finished it. Last year I used Julia, which I think is actually pretty close to perfect for this sort of thing, it has an REPL, linear algebra in the standard library and a clever JIT compiler that can produce code about as performant traditional compiled languages, much more convieniently. This year I wanted to write readable, performant, and robust code, and Rust seems to me the best language for that job. Did I succeed? No. Some of my solutions are nice, some are really not. I didn't do much clean up work, once I reached the mid forties my enthusiam started to wane.
 

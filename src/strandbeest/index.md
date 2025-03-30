@@ -1,9 +1,11 @@
 ---
 title: Making a Flexible Strandbeest
-layout: post.njk
+layout: post.liquid
+tags: blog
+date: 2022-09-22
 ---
 
-_22 Sep 2022 -- Adapted from a University Project_
+_Adapted from a University Project_
 
 The [Strandbeests](https://www.strandbeest.com/) are a family of kinetic sculptures developed by Theo Jansen.
 At their centre is a linkage which is responsible for their organic gait.

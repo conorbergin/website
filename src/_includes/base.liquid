@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+    <head>
+        <title>{{ title }}</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:ital,wght@0,200..800;1,200..800&family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/style.css">
+        <link rel="icon" type="image/x-png" href="/Clight.png">
+    </head>
+    <body>
+        <header>
+            <nav>
+                {% for link in nav %}
+                  <a href="{{ link.url }}" class="{% if page.url != link.url %}active{% endif %}">{{ link.name }}</a>
+                {% endfor %}
+                <svg style="vertical-align:bottom;" id="eyes" height="24" viewbox="-1 -0.5 2 1">
+                    <circle id="l_eye" cx="-0.5" cy="0" r="0.4" fill="white" stroke="black" stroke-width="0.1"/>
+                    <circle id="r_eye" cx="0.5" cy="0" r="0.4" fill="white"  stroke="black" stroke-width="0.1"/>
+                    <circle id="l_pupil" cx="-0.5" cy="0" r="0.2" fill="black"/>
+                    <circle id="r_pupil" cx="0.5" cy="0" r="0.2" fill="black" />
+                    <line style="visibility:hidden;" id="l_closed" x1="-0.9" x2="-0.2" y1="0" y2="0" stroke-width="0.15" stroke-linecap="round" stroke="black"/>
+                    <line style="visibility:hidden;" id="r_closed" x1="0.9" x2="0.2" y1="0" y2="0" stroke-width="0.15"   stroke-linecap="round" stroke="black"/>
+                </svg>
+              </nav>
+        </header>
+        <main>
+            {{ content }}
+        </main>
+        <footer><hr/></footer>
+    </body>
+    <script src="/eyes.js"></script>
+</html>

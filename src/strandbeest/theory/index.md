@@ -1,6 +1,6 @@
 ---
 title: Beam Theory
-layout: post.njk
+layout: post.liquid
 ---
 
 You might have done an experiment in school with a spring, some weights and a ruler.

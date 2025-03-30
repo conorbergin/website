@@ -1,0 +1,18 @@
+[
+    {
+        "url": "/",
+        "name": "Index"
+    },
+    {
+        "url": "/blog/",
+        "name": "Blog"
+    },
+    {
+        "url": "/essays/",
+        "name": "Essays"
+    },
+    {
+        "url": "/bookmarks/",
+        "name": "Bookmarks"
+    }
+]
