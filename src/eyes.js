@@ -15,8 +15,10 @@ const lsKey = "cursorState"
 
 const ls = JSON.parse(localStorage.getItem(lsKey));
 
-dx = ls.dx;
-dy = ls.dy;
+if (ls) {
+    dx = ls.dx;
+    dy = ls.dy;
+}
 
 update_eyes()
 
@@ -28,7 +30,7 @@ function clamp(x, min, max) {
 
 function close() {
     // l_eye.style.visibility = "hidden"
-    [l_eye, r_eye, l_pupil, r_pupil].forEach(e => e.style.visibility ="hidden");
+    [l_eye, r_eye, l_pupil, r_pupil].forEach(e => e.style.visibility = "hidden");
     [l_closed, r_closed].forEach(e => e.style.visibility = "visible");
 }
 
@@ -39,7 +41,7 @@ function open() {
 
 function blink() {
     close()
-    setTimeout(open,300)
+    setTimeout(open, 300)
 }
 
 
@@ -57,6 +59,15 @@ function update_eyes() {
 
 
 document.onpointermove = (event) => {
+    const bbox = eyes.getBoundingClientRect();
+    dx = bbox.left + bbox.width / 2 - event.clientX;
+    dy = bbox.top + bbox.height / 2 - event.clientY;
+
+    update_eyes();
+}
+
+
+document.onpointerdown = (event) => {
     const bbox = eyes.getBoundingClientRect();
     dx = bbox.left + bbox.width / 2 - event.clientX;
     dy = bbox.top + bbox.height / 2 - event.clientY;
