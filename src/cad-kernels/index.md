@@ -5,9 +5,13 @@ date: 2025-03-27
 layout: post.liquid
 ---
 
-I made a slightly uniformed blog post in 2022 comparing the various CAD programs I could access on Linux, since then my understanding has come a long way, so I thought I would put together an essay on CAD at a deeper level.
+I made a slightly uniformed blog post in 2022 comparing the various CAD programs I could access on Linux, since then my understanding has come a long way, so I thought I would put together an article on CAD at a deeper level.
 
 ## What do we mean by CAD?
+
+CAD (Computer Aided Design) is a vague classification. You can, and people do, use Adobe Illustator to do CAD work, there are situations where you 
+
+
 - specify geometry
 - verify and test designs with simulation
 - outut for 3d printers
@@ -25,3 +29,15 @@ Firstly we must remember it really is CAD/CAM, Computer Aided Design and Compute
 
 ### F-Rep
 This is one for the mathematicians, instead of spending all our time stitching together surfaces and.
+
+hello <math display="inline">
+  <mfrac>
+    <mn>1</mn>
+    <msqrt>
+      <mn>2</mn>
+    </msqrt>
+  </mfrac>
+</math> thi is great
+
+</p>
+

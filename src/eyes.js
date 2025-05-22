@@ -3,13 +3,10 @@ let dx = 0;
 let dy = 0;
 // let blink = 0;
 
-const l_pupil = document.getElementById("l_pupil");
-const r_pupil = document.getElementById("r_pupil");
-const l_eye = document.getElementById("l_eye");
-const r_eye = document.getElementById("r_eye");
-
-const l_closed = document.getElementById("l_closed")
-const r_closed = document.getElementById("r_closed")
+const l_pupil = document.getElementById("pupil-0");
+const r_pupil = document.getElementById("pupil-1");
+const l_eye = document.getElementById("eye-0");
+const r_eye = document.getElementById("eye-1");
 
 const lsKey = "cursorState"
 
@@ -28,20 +25,19 @@ function clamp(x, min, max) {
 }
 
 
-function close() {
-    // l_eye.style.visibility = "hidden"
-    [l_eye, r_eye, l_pupil, r_pupil].forEach(e => e.style.visibility = "hidden");
-    [l_closed, r_closed].forEach(e => e.style.visibility = "visible");
-}
-
-function open() {
-    [l_eye, r_eye, l_pupil, r_pupil].forEach(e => e.style.visibility = "visible");
-    [l_closed, r_closed].forEach(e => e.style.visibility = "hidden");
-}
+const duration = 1000;
 
 function blink() {
-    close()
-    setTimeout(open, 300)
+    [l_eye,r_eye].forEach((e) => e.setAttribute("transform","scale( 1 0.5)"))
+    setTimeout(() => {
+        [l_eye,r_eye].forEach((e) => e.setAttribute("transform","scale(1 0.1)"));
+        setTimeout(() => {
+            [l_eye,r_eye].forEach((e) => e.setAttribute("transform","scale(1 0.5)"))
+            setTimeout(()=> {
+                [l_eye,r_eye].forEach((e) => e.setAttribute("transform","scale(1 1)"))
+            },duration)
+        },duration)
+    }, duration)
 }
 
 
@@ -49,12 +45,13 @@ function update_eyes() {
     const dx2 = clamp(dx, -100, 100) / 100
     const dy2 = clamp(dy, -100, 100) / 100
 
-    // console.log(dx,dy)
-    l_pupil.setAttribute('cx', -dx2 / 6 - 0.5)
-    l_pupil.setAttribute('cy', -dy2 / 6)
+    const x_factor = 3;
+    const y_factor = 4;
 
-    r_pupil.setAttribute('cx', -dx2 / 6 + 0.5)
-    r_pupil.setAttribute('cy', -dy2 / 6)
+    // console.log(dx,dy)
+    l_pupil.setAttribute('transform', `translate(${-dx2*x_factor},${-dy2*y_factor})`)
+    r_pupil.setAttribute('transform', `translate(${dx2*x_factor},${-dy2*y_factor})`)
+
 }
 
 

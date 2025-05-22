@@ -1,0 +1,20 @@
+<p>Welcome to my website!</p>
+<p>I started it in 2022 to both improve my writing and provide a
+deliverable for my unending stream of personal projects. I have probably
+spent far more time than I could have ever accounted for messing around
+with css and static site generators.</p>
+<p>- <em>Conor Bergin</em></p>
+<p><em>Care about people´s approval and you will be their prisoner. Do
+your work, then step back, the only path to serenity.</em> - Tao Te
+Ching</p>
+<h2>
+Recent posts
+</h2>
+{%- assign rev = collections.blog |reverse -%}
+<ul class="quiet">
+{%- for p in rev limit : 5 -%}
+<li>
+<a href={{p.url}}>{{p.data.title}}</a>
+</li>
+{%- endfor -%}
+</ul>

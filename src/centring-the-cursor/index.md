@@ -24,7 +24,7 @@ If you look closely at the transitions between different cursor icons, you will 
 
 The default arrow has its hot spot on its point, whereas the move cursor has its hot spot in its centre, and the grab cursor has no clear hot spot. Some of the hot spots are obscured and some aren't. Nothing here is logically consistent. I am not against the use of symbols, but I do find it a bit irritating the cursor will jump about as it transitions between cursor images with different hot spots.
 
-## Hypothesis -- All cursors should be centred
+## Hypothesis : All cursors should be centred
 
 Cursors are used for aiming, and they should follow the conventions of other things that are used for aiming. Video game crosshairs, sights on guns, rangefinders, all need some way of indicating the point of aim, and they usually do this with a cross, a dot or a circle. There are examples of scopes with chevrons or arrows pointing at the point of aim, but these are not as common. I suspect it is important for the optical centre of the reticle to match the point of aim. Furthermore, I suspect that when users click on buttons they place the cursor so its center of mass is in the centre of the button, not the tip. I have no data to back this up and am happy to be proved wrong.
 
