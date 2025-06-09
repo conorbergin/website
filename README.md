@@ -15,3 +15,9 @@ The website should work without javascript, javascript is not banned, but it sho
 
 Navigation should be done with a flexible and reconfigurable tag system, it should be easy to change the category of a page from one thing to another, pages should never change, nor should the sitemap, only the linking throughout the website.
 
+
+
+# deps
+make
+https://github.com/mitsuhiko/minijinja
+
