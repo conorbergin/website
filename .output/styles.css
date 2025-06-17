@@ -14,6 +14,8 @@
     /* Default color scheme variables */
     color-scheme: light dark;
 
+    --pupil-x: 0px;
+    --pupil-y: 0px;
 
     --ss : "Atkinson Hyperlegible Next";
     --ms : "Atkinson Hyperlegible Mono";
@@ -56,6 +58,31 @@ a {
     text-decoration: none;
 }
 
+#eye-root {
+/*  height:100px;
+  object-fit: cover;
+  object-position: center top;
+  display:block;
+  position:relative; */   
+}
+
+#pupil {
+    
+height:50px;
+top:30px;
+left:295px;
+object-fit:cover;
+object-position:center top;
+display:block;
+position:absolute;
+transform:translate(var(--pupil-x),var(--pupil-y));
+}
+
+.eyes {
+    
+transform:translate(var(--pupil-x),var(--pupil-y));
+}
+
 body {
 
     background-color: var(--bg);
@@ -64,6 +91,11 @@ body {
 
     margin: auto;
     max-width: 700px;
+}
+
+header {
+    display: flex;
+    flex-direction: column;
 }
 
 nav {

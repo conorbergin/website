@@ -5,27 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="/c.png">
 <link rel=stylesheet href="/styles.css"/>
+
 <title>{{title}}</title>
+<script>
+  var dx = 0;
+  var dy = 0;
+  const eye_data = JSON.parse(localStorage.getItem("cursorState"));
+  if (eye_data) {
+    dx = eye_data.dx;
+    dy = eye_data.dy;
+  }
+
+  function update(e) {
+    if (e) {
+      
+      const bbox = document.querySelector("#eye-root").getBoundingClientRect();
+      dx = bbox.left + bbox.width / 2 - e.clientX;
+      dy = bbox.top + bbox.height / 2 - e.clientY;
+
+    }
+
+    const clamp_x = 200;
+    const clamp_y = 200;
+
+    const dx2 = Math.max(-clamp_x, Math.min(clamp_x, dx)) / clamp_x
+    const dy2 = Math.max(-clamp_y, Math.min(clamp_y, dy)) / clamp_y
+
+    const x_factor = 20;
+    const y_factor = 20;
+    
+    document.documentElement.style.setProperty("--pupil-x",`${-x_factor*dx2}px`);
+    document.documentElement.style.setProperty("--pupil-y",`${-y_factor*dy2}px`);
+  }
+
+  update(null);
+
+  document.onpointermove = update;
+  document.onpointerdown = update;
+
+  window.addEventListener('beforeunload', () => {
+      localStorage.setItem("cursorState", JSON.stringify({
+          dx,
+          dy,
+      }))
+  })
+
+</script>
 </head>
 <body>
-<header>
+<header style="width:100%;">
 <nav style="display:flex;  gap:0.5rem;">
 <a href="/">Index</a>
 <a href="/blog/">Blog</a>
 <a href="/bookmarks/">Bookmarks</a>
 
 </nav>
-
-{% set gh = 100%}
-<div style="position:relative;">
-<img id="eye-1" src="/goblin.png" style=" height:100px; object-fit: cover; object-position: center top; display:block;position:relative;">
-<img id="pupil-1" src="/eyes.png" style="height:50px;top:30px;left:295px; object-fit:cover; object-position:center top; display:block; position:absolute">
-</div>
+{% include ".cache/goblin.svg" %}
 </header>
 <main>
 {{ content | safe }}
 </main>
 <footer></footer>
 </body>
-<script src="/eyes.js"></script>
 </html>

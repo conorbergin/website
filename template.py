@@ -5,7 +5,6 @@ import os
 import json
 
 
-
 if len(sys.argv) !=  3:
     print("script <data.json> <content.html>")
 
