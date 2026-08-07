@@ -27,10 +27,10 @@
   
     /* Light mode colors */
     --background-light: white;
-    --text-light: #222222;
+    --text-light: black;
     
     /* Dark mode colors */
-    --background-dark: #222;
+    --background-dark: black;
     --text-dark: white;
   
     /* Base colors that will automatically invert */
@@ -78,9 +78,19 @@ position:absolute;
 transform:translate(var(--pupil-x),var(--pupil-y));
 }
 
+.svg-fg {
+    stroke: var(--fg);
+}
+
+.svg-bg {
+    fill: var(--bg);
+}
+
 .eyes {
     
 transform:translate(var(--pupil-x),var(--pupil-y));
+
+
 }
 
 body {
@@ -102,6 +112,13 @@ nav {
     padding: 0.3rem;
 }
 
+
+footer nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0.3rem;
+    text-align: left;
+}
 
 nav a {
     /* border-bottom: 1px solid var(--fg); */

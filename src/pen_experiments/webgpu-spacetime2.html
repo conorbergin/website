@@ -1,0 +1,746 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>WebGPU Spacetime Pen</title>
+        <style>
+            html,
+            body {
+            }
+            canvas {
+                display: inline-block;
+                touch-action: none;
+                border: solid black 1px;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas width="800" height="500" id="c1"></canvas>
+        <canvas width="800" height="500" id="c2"></canvas>
+        <canvas width="800" height="500" id="c3"></canvas>
+        <canvas width="800" height="500" id="c4"></canvas>
+        <script type="module">
+            const canvas1 = document.getElementById("c1");
+            const canvas2 = document.getElementById("c2");
+            const canvas3 = document.getElementById("c3");
+            const canvas4 = document.getElementById("c4");
+
+            const adapter = await navigator.gpu.requestAdapter();
+            const device = await adapter.requestDevice();
+            const ctx1 = canvas1.getContext("webgpu");
+            const ctx2 = canvas2.getContext("webgpu");
+            const ctx3 = canvas3.getContext("webgpu");
+            const ctx4 = canvas4.getContext("webgpu");
+
+            const format = navigator.gpu.getPreferredCanvasFormat();
+            ctx1.configure({ device, format, alphaMode: "opaque" });
+            ctx2.configure({ device, format, alphaMode: "opaque" });
+            ctx3.configure({ device, format, alphaMode: "opaque" });
+            ctx4.configure({ device, format, alphaMode: "opaque" });
+
+            function makeDepthTex(cv) {
+                return device.createTexture({
+                    size: [cv.width, cv.height],
+                    format: "depth24plus",
+                    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+                });
+            }
+
+            const depthTex1 = makeDepthTex(canvas1);
+            const depthTex2 = makeDepthTex(canvas2);
+            const depthTex4 = makeDepthTex(canvas4);
+            // depth32float (not depth24plus) so we can bind it as a texture in the edge pass
+            const toonDepthTex = device.createTexture({
+                size: [canvas3.width, canvas3.height],
+                format: "depth32float",
+                usage:
+                    GPUTextureUsage.RENDER_ATTACHMENT |
+                    GPUTextureUsage.TEXTURE_BINDING,
+            });
+
+            const SIDES = 32;
+
+            const shaderSrc = /* wgsl */ `
+            struct Uniforms { viewProj: mat4x4<f32> }
+            @group(0) @binding(0) var<uniform> uni: Uniforms;
+
+            struct Out {
+              @builtin(position) pos: vec4<f32>,
+              @location(0) angle: f32,
+            }
+
+            @vertex
+            fn vs(@location(0) position: vec3<f32>, @location(1) angle: f32) -> Out {
+              var o: Out;
+              o.pos = uni.viewProj * vec4<f32>(position, 1.0);
+              o.angle = angle;
+              return o;
+            }
+
+            @fragment
+            fn fs(in: Out) -> @location(0) vec4<f32> {
+              let h = fract(in.angle / (2.0 * 3.14159265)) * 6.0;
+              let i = floor(h);
+              let f = h - i;
+              let q = 1.0 - f;
+              var rgb: vec3<f32>;
+              if (i < 1.0) { rgb = vec3(1.0, f, 0.0); }
+              else if (i < 2.0) { rgb = vec3(q, 1.0, 0.0); }
+              else if (i < 3.0) { rgb = vec3(0.0, 1.0, f); }
+              else if (i < 4.0) { rgb = vec3(0.0, q, 1.0); }
+              else if (i < 5.0) { rgb = vec3(f, 0.0, 1.0); }
+              else { rgb = vec3(1.0, 0.0, q); }
+              return vec4<f32>(rgb, 1.0);
+            }
+            `;
+
+            const shaderModule = device.createShaderModule({ code: shaderSrc });
+
+            const pipeline = device.createRenderPipeline({
+                layout: "auto",
+                vertex: {
+                    module: shaderModule,
+                    entryPoint: "vs",
+                    buffers: [
+                        {
+                            arrayStride: 16,
+                            attributes: [
+                                {
+                                    shaderLocation: 0,
+                                    offset: 0,
+                                    format: "float32x3",
+                                },
+                                {
+                                    shaderLocation: 1,
+                                    offset: 12,
+                                    format: "float32",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                fragment: {
+                    module: shaderModule,
+                    entryPoint: "fs",
+                    targets: [{ format }],
+                },
+                primitive: { topology: "triangle-list", cullMode: "none" },
+                depthStencil: {
+                    format: "depth24plus",
+                    depthWriteEnabled: true,
+                    depthCompare: "less",
+                },
+            });
+
+            // Isometric view shader: same hue logic but fades to grey with age.
+            // Uniforms are 80 bytes: mat4x4 (64) + maxT f32 (4) + 12 padding.
+            const isoShaderSrc = /* wgsl */ `
+struct Uniforms {
+  viewProj: mat4x4<f32>,
+  maxT: f32,
+}
+@group(0) @binding(0) var<uniform> uni: Uniforms;
+
+struct Out {
+  @builtin(position) pos: vec4<f32>,
+  @location(0) angle: f32,
+  @location(1) t: f32,
+}
+
+@vertex
+fn vs(@location(0) position: vec3<f32>, @location(1) angle: f32) -> Out {
+  var o: Out;
+  o.pos = uni.viewProj * vec4<f32>(position, 1.0);
+  o.angle = angle;
+  o.t = position.z;
+  return o;
+}
+
+@fragment
+fn fs(in: Out) -> @location(0) vec4<f32> {
+  let h = fract(in.angle / (2.0 * 3.14159265)) * 6.0;
+  let i = floor(h);
+  let f = h - i;
+  let q = 1.0 - f;
+  var rgb: vec3<f32>;
+  if (i < 1.0) { rgb = vec3(1.0, f, 0.0); }
+  else if (i < 2.0) { rgb = vec3(q, 1.0, 0.0); }
+  else if (i < 3.0) { rgb = vec3(0.0, 1.0, f); }
+  else if (i < 4.0) { rgb = vec3(0.0, q, 1.0); }
+  else if (i < 5.0) { rgb = vec3(f, 0.0, 1.0); }
+  else { rgb = vec3(1.0, 0.0, q); }
+  let age = uni.maxT - in.t;
+  let fade = clamp(age / 300.0, 0.0, 1.0);
+  return vec4<f32>(mix(rgb, vec3(0.5), fade), 1.0);
+}
+`;
+            const isoModule = device.createShaderModule({ code: isoShaderSrc });
+
+            const isoPipeline = device.createRenderPipeline({
+                layout: "auto",
+                vertex: {
+                    module: isoModule,
+                    entryPoint: "vs",
+                    buffers: [
+                        {
+                            arrayStride: 16,
+                            attributes: [
+                                {
+                                    shaderLocation: 0,
+                                    offset: 0,
+                                    format: "float32x3",
+                                },
+                                {
+                                    shaderLocation: 1,
+                                    offset: 12,
+                                    format: "float32",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                fragment: {
+                    module: isoModule,
+                    entryPoint: "fs",
+                    targets: [{ format }],
+                },
+                primitive: { topology: "triangle-list", cullMode: "none" },
+                depthStencil: {
+                    format: "depth24plus",
+                    depthWriteEnabled: true,
+                    depthCompare: "less",
+                },
+            });
+
+            // Pass 1: depth-only geometry pass (no colour output, no fragment shader)
+            const toonGeomSrc = /* wgsl */ `
+            struct Uniforms { viewProj: mat4x4<f32> }
+            @group(0) @binding(0) var<uniform> uni: Uniforms;
+
+            @vertex
+            fn vs(@location(0) position: vec3<f32>, @location(1) angle: f32) -> @builtin(position) vec4<f32> {
+              return uni.viewProj * vec4<f32>(position, 1.0);
+            }
+            `;
+            const toonGeomModule = device.createShaderModule({
+                code: toonGeomSrc,
+            });
+
+            const toonGeomPipeline = device.createRenderPipeline({
+                layout: "auto",
+                vertex: {
+                    module: toonGeomModule,
+                    entryPoint: "vs",
+                    buffers: [
+                        {
+                            arrayStride: 16,
+                            attributes: [
+                                {
+                                    shaderLocation: 0,
+                                    offset: 0,
+                                    format: "float32x3",
+                                },
+                                {
+                                    shaderLocation: 1,
+                                    offset: 12,
+                                    format: "float32",
+                                },
+                            ],
+                        },
+                    ],
+                },
+                primitive: { topology: "triangle-list", cullMode: "none" },
+                depthStencil: {
+                    format: "depth32float",
+                    depthWriteEnabled: true,
+                    depthCompare: "less",
+                },
+            });
+
+            // Pass 2: fullscreen edge-detection quad reading the depth texture
+            const toonEdgeSrc = /* wgsl */ `
+            @group(0) @binding(0) var depthTex: texture_depth_2d;
+
+            @vertex
+            fn vs(@builtin(vertex_index) vi: u32) -> @builtin(position) vec4<f32> {
+              var p = array<vec2<f32>, 4>(
+                vec2(-1.0,  1.0), vec2(-1.0, -1.0),
+                vec2( 1.0,  1.0), vec2( 1.0, -1.0),
+              );
+              return vec4<f32>(p[vi], 0.0, 1.0);
+            }
+
+            @fragment
+            fn fs(@builtin(position) fragPos: vec4<f32>) -> @location(0) vec4<f32> {
+              let xy   = vec2<i32>(i32(fragPos.x), i32(fragPos.y));
+              let dims = vec2<i32>(textureDimensions(depthTex));
+              let d    = textureLoad(depthTex, xy, 0);
+              let ink  = d < 0.9999;
+
+              // Sobel edge detection on depth buffer.
+              // OUTLINE_LOW:  Sobel magnitude where outline starts — raise to ignore faint edges
+              // OUTLINE_HIGH: Sobel magnitude for full black — lower = harder/sharper, higher = softer
+              const OUTLINE_LOW:  f32 = 0.001;
+              const OUTLINE_HIGH: f32 = 0.01;
+
+              let d00 = textureLoad(depthTex, clamp(xy + vec2<i32>(-1,-1), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d10 = textureLoad(depthTex, clamp(xy + vec2<i32>( 0,-1), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d20 = textureLoad(depthTex, clamp(xy + vec2<i32>( 1,-1), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d01 = textureLoad(depthTex, clamp(xy + vec2<i32>(-1, 0), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d21 = textureLoad(depthTex, clamp(xy + vec2<i32>( 1, 0), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d02 = textureLoad(depthTex, clamp(xy + vec2<i32>(-1, 1), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d12 = textureLoad(depthTex, clamp(xy + vec2<i32>( 0, 1), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+              let d22 = textureLoad(depthTex, clamp(xy + vec2<i32>( 1, 1), vec2<i32>(0), dims-vec2<i32>(1)), 0);
+
+              let gx = -d00 - 2.0*d01 - d02 + d20 + 2.0*d21 + d22;
+              let gy = -d00 - 2.0*d10 - d20 + d02 + 2.0*d12 + d22;
+              let g  = sqrt(gx*gx + gy*gy);
+
+              let white = vec4<f32>(1.0, 1.0, 1.0, 1.0);
+              let black = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+              let grey  = vec4<f32>(0.55, 0.55, 0.55, 1.0);
+              if (!ink) { return white; }
+              let edge = smoothstep(OUTLINE_LOW, OUTLINE_HIGH, g);
+              return mix(grey, black, edge);
+            }
+            `;
+            const toonEdgeModule = device.createShaderModule({
+                code: toonEdgeSrc,
+            });
+
+            const toonEdgePipeline = device.createRenderPipeline({
+                layout: "auto",
+                vertex: { module: toonEdgeModule, entryPoint: "vs" },
+                fragment: {
+                    module: toonEdgeModule,
+                    entryPoint: "fs",
+                    targets: [{ format }],
+                },
+                primitive: { topology: "triangle-strip" },
+            });
+
+            // Canvas 4: world-space normal map. N = (cos(angle), sin(angle), 0) → rgb = N*0.5+0.5
+            const normalMapSrc = /* wgsl */ `
+            struct Uniforms { viewProj: mat4x4<f32> }
+            @group(0) @binding(0) var<uniform> uni: Uniforms;
+
+            struct Out {
+              @builtin(position) pos: vec4<f32>,
+              @location(0) angle: f32,
+            }
+
+            @vertex
+            fn vs(@location(0) position: vec3<f32>, @location(1) angle: f32) -> Out {
+              var o: Out;
+              o.pos = uni.viewProj * vec4<f32>(position, 1.0);
+              o.angle = angle;
+              return o;
+            }
+
+            @fragment
+            fn fs(in: Out) -> @location(0) vec4<f32> {
+              let nx = cos(in.angle) * 0.5 + 0.5;
+              let ny = sin(in.angle) * 0.5 + 0.5;
+              return vec4<f32>(nx, ny, 0.5, 1.0);
+            }
+            `;
+            const normalMapModule = device.createShaderModule({ code: normalMapSrc });
+            const normalMapPipeline = device.createRenderPipeline({
+                layout: "auto",
+                vertex: {
+                    module: normalMapModule,
+                    entryPoint: "vs",
+                    buffers: [{
+                        arrayStride: 16,
+                        attributes: [
+                            { shaderLocation: 0, offset: 0,  format: "float32x3" },
+                            { shaderLocation: 1, offset: 12, format: "float32"   },
+                        ],
+                    }],
+                },
+                fragment: {
+                    module: normalMapModule,
+                    entryPoint: "fs",
+                    targets: [{ format }],
+                },
+                primitive: { topology: "triangle-list", cullMode: "none" },
+                depthStencil: {
+                    format: "depth24plus",
+                    depthWriteEnabled: true,
+                    depthCompare: "less",
+                },
+            });
+
+            function makeUBuf() {
+                return device.createBuffer({
+                    size: 64,
+                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                });
+            }
+
+            const ubuf1 = makeUBuf(); // 64 bytes: mat4x4 only
+            // 80 bytes: mat4x4 (64) + maxT f32 (4) + 12 bytes padding
+            const ubuf2 = device.createBuffer({
+                size: 80,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            });
+
+            const bg1 = device.createBindGroup({
+                layout: pipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: ubuf1 } }],
+            });
+            const bg2 = device.createBindGroup({
+                layout: isoPipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: ubuf2 } }],
+            });
+
+            // Toon geometry pass uses the same plan matrix as canvas1 (ubuf1)
+            const bgToonGeom = device.createBindGroup({
+                layout: toonGeomPipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: ubuf1 } }],
+            });
+            const bgToonEdge = device.createBindGroup({
+                layout: toonEdgePipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: toonDepthTex.createView() }],
+            });
+            const bg4 = device.createBindGroup({
+                layout: normalMapPipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: ubuf1 } }],
+            });
+
+            // Orthographic: x∈[0,w], y∈[0,h], z∈[zNear,zFar] → NDC
+            // zNear > zFar so recent events (large t) get smaller NDC_z and win depth test
+            function planMatrix(w, h, zNear, zFar) {
+                const m = new Float32Array(16);
+                m[0] = 2 / w;
+                m[5] = -2 / h;
+                m[10] = 1 / (zFar - zNear);
+                m[12] = -1;
+                m[13] = 1;
+                m[14] = -zNear / (zFar - zNear);
+                m[15] = 1;
+                return m;
+            }
+
+            // Isometric orthographic projection, auto-fitted and centred.
+            // All three axes project to equal length; x and t at 30° from horizontal.
+            // Screen-space axes:
+            //   world x → (right, down)  = (√3/2, 1/2)
+            //   world y → (down)          = (0,    1  )
+            //   world t → (left,  down)  = (−√3/2, 1/2)
+            function isoMatrix(w, h, zNear, zFar) {
+                // True isometric: axes at 30° from horizontal (cos30 = √3/2, sin30 = 0.5)
+                // ax/bx: how much world-x moves screen-x/y
+                // at/bt: how much world-t moves screen-x/y
+                const r3 = Math.sqrt(3) / 2;
+                const ax = r3,
+                    bx = 0.5;
+                const at = -r3,
+                    bt = 0.5;
+
+                // Scale fixed to canvas size. Translation tracks maxT so the most
+                // recent slice stays centred; old history drifts to upper-right and clips.
+                const maxT = Math.max(0, zNear - 100);
+                const contentW0 = w * ax; // screen-x extent of the xy drawing plane
+                const contentH0 = w * bx + h; // screen-y extent of the xy drawing plane
+                const s = Math.min(w / contentW0, h / contentH0);
+
+                const m = new Float32Array(16);
+                m[0] = (2 * s * ax) / w;
+                m[1] = -(2 * s * bx) / h;
+                m[5] = -(2 * s) / h;
+                m[8] = (2 * s * at) / w;
+                m[9] = -(2 * s * bt) / h;
+                m[10] = 1 / (zFar - zNear);
+                // Offset cancels the time shear at t=maxT, keeping the latest slice fixed.
+                m[12] = -s * r3 + (2 * s * r3 * maxT) / w;
+                m[13] = (s * contentH0) / h + (2 * s * bt * maxT) / h;
+                m[14] = -zNear / (zFar - zNear);
+                m[15] = 1;
+                return m;
+            }
+
+            const MAX_VERTS = 1024 * 1024;
+            const vertData = new Float32Array(MAX_VERTS * 4);
+            let vertCount = 0;
+            let gpuVertBuf = null;
+            let dirty = false;
+
+            function ensureVertBuf() {
+                if (gpuVertBuf) gpuVertBuf.destroy();
+                if (vertCount === 0) {
+                    gpuVertBuf = null;
+                    return;
+                }
+                gpuVertBuf = device.createBuffer({
+                    size: vertCount * 16,
+                    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+                    mappedAtCreation: true,
+                });
+                new Float32Array(gpuVertBuf.getMappedRange()).set(
+                    vertData.subarray(0, vertCount * 4),
+                );
+                gpuVertBuf.unmap();
+            }
+
+            function addSegment(c0, c1) {
+                for (let i = 0; i < SIDES; i++) {
+                    const a0 = (i / SIDES) * Math.PI * 2;
+                    const a1 = ((i + 1) / SIDES) * Math.PI * 2;
+                    const v = [
+                        [
+                            c0.x + Math.cos(a0) * c0.r,
+                            c0.y + Math.sin(a0) * c0.r,
+                            c0.t,
+                            a0,
+                        ],
+                        [
+                            c1.x + Math.cos(a0) * c1.r,
+                            c1.y + Math.sin(a0) * c1.r,
+                            c1.t,
+                            a0,
+                        ],
+                        [
+                            c0.x + Math.cos(a1) * c0.r,
+                            c0.y + Math.sin(a1) * c0.r,
+                            c0.t,
+                            a1,
+                        ],
+                        [
+                            c1.x + Math.cos(a1) * c1.r,
+                            c1.y + Math.sin(a1) * c1.r,
+                            c1.t,
+                            a1,
+                        ],
+                    ];
+                    for (const idx of [0, 1, 2, 1, 3, 2]) {
+                        if (vertCount >= MAX_VERTS) return;
+                        const base = vertCount * 4;
+                        vertData[base] = v[idx][0];
+                        vertData[base + 1] = v[idx][1];
+                        vertData[base + 2] = v[idx][2];
+                        vertData[base + 3] = v[idx][3];
+                        vertCount++;
+                    }
+                }
+            }
+            const EVENT_SCALE = 1; // z units per sensor event
+
+            function addCap(c) {
+                for (let i = 0; i < SIDES; i++) {
+                    const a0 = (i / SIDES) * Math.PI * 2;
+                    const a1 = ((i + 1) / SIDES) * Math.PI * 2;
+
+                    if (vertCount >= MAX_VERTS) return;
+                    let base = vertCount * 4;
+                    vertData[base] = c.x + Math.cos(a0) * c.r;
+                    vertData[base + 1] = c.y + Math.sin(a0) * c.r;
+                    vertData[base + 2] = c.t;
+                    vertData[base + 3] = a0;
+                    vertCount++;
+                    base = vertCount * 4;
+                    vertData[base] = c.x + Math.cos(a1) * c.r;
+                    vertData[base + 1] = c.y + Math.sin(a1) * c.r;
+                    vertData[base + 2] = c.t;
+                    vertData[base + 3] = a1;
+                    vertCount++;
+                    base = vertCount * 4;
+                    vertData[base] = c.x;
+                    vertData[base + 1] = c.y;
+                    vertData[base + 2] = c.t + EVENT_SCALE;
+                    vertData[base + 3] = a0;
+                    vertCount++;
+                }
+            }
+
+            let eventIndex = 0;
+
+            canvas1.addEventListener("pointerdown", (event) => {
+                const t = eventIndex++ * EVENT_SCALE;
+                const rect = canvas1.getBoundingClientRect();
+                let currentStroke = {
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top,
+                    r: Math.max(4, event.pressure * 80),
+                    t,
+                };
+
+                function move(e) {
+                    if (e.buttons === 0) return;
+
+                    const t = eventIndex++ * EVENT_SCALE;
+
+                    const next = {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        r: Math.max(4, e.pressure * 80),
+                        t,
+                    };
+                    if (currentStroke) {
+                        addSegment(currentStroke, next);
+                        dirty = true;
+                    }
+                    currentStroke = next;
+                }
+
+                function up(e) {
+                    addCap(currentStroke);
+                    dirty = true;
+                    document.removeEventListener("pointerup", up);
+                    document.removeEventListener("pointermove", move);
+                }
+
+                document.addEventListener("pointermove", move);
+                document.addEventListener("pointerup", up);
+            });
+
+            function doPass(encoder, ctx, depthTex, bg) {
+                const pass = encoder.beginRenderPass({
+                    colorAttachments: [
+                        {
+                            view: ctx.getCurrentTexture().createView(),
+                            clearValue: { r: 0.05, g: 0.05, b: 0.05, a: 1 },
+                            loadOp: "clear",
+                            storeOp: "store",
+                        },
+                    ],
+                    depthStencilAttachment: {
+                        view: depthTex.createView(),
+                        depthClearValue: 1.0,
+                        depthLoadOp: "clear",
+                        depthStoreOp: "store",
+                    },
+                });
+                pass.setPipeline(pipeline);
+                pass.setBindGroup(0, bg);
+                if (gpuVertBuf && vertCount > 0) {
+                    pass.setVertexBuffer(0, gpuVertBuf);
+                    pass.draw(vertCount);
+                }
+                pass.end();
+            }
+
+            function doToonPass(encoder) {
+                // Pass 1: write geometry into the depth texture (no colour output)
+                const geomPass = encoder.beginRenderPass({
+                    colorAttachments: [],
+                    depthStencilAttachment: {
+                        view: toonDepthTex.createView(),
+                        depthClearValue: 1.0,
+                        depthLoadOp: "clear",
+                        depthStoreOp: "store",
+                    },
+                });
+                if (gpuVertBuf && vertCount > 0) {
+                    geomPass.setPipeline(toonGeomPipeline);
+                    geomPass.setBindGroup(0, bgToonGeom);
+                    geomPass.setVertexBuffer(0, gpuVertBuf);
+                    geomPass.draw(vertCount);
+                }
+                geomPass.end();
+
+                // Pass 2: fullscreen edge-detection quad → canvas3
+                const edgePass = encoder.beginRenderPass({
+                    colorAttachments: [
+                        {
+                            view: ctx3.getCurrentTexture().createView(),
+                            clearValue: { r: 1, g: 1, b: 1, a: 1 },
+                            loadOp: "clear",
+                            storeOp: "store",
+                        },
+                    ],
+                });
+                edgePass.setPipeline(toonEdgePipeline);
+                edgePass.setBindGroup(0, bgToonEdge);
+                edgePass.draw(4);
+                edgePass.end();
+            }
+
+            function frame() {
+                if (dirty) {
+                    ensureVertBuf();
+                    dirty = false;
+                }
+
+                const maxT = Math.max(1, eventIndex * EVENT_SCALE);
+                const zNear = maxT + 100;
+                const zFar = -100;
+
+                device.queue.writeBuffer(
+                    ubuf1,
+                    0,
+                    planMatrix(canvas1.width, canvas1.height, zNear, zFar),
+                );
+                // Write mat4x4 + maxT into the 80-byte iso uniform buffer
+                const isoData = new Float32Array(20);
+                isoData.set(
+                    isoMatrix(canvas2.width, canvas2.height, zNear, zFar),
+                );
+                isoData[16] = maxT;
+                device.queue.writeBuffer(ubuf2, 0, isoData);
+
+                const enc = device.createCommandEncoder();
+                doPass(enc, ctx1, depthTex1, bg1);
+
+                // Canvas 2: iso view with age-fade, uses isoPipeline
+                {
+                    const pass = enc.beginRenderPass({
+                        colorAttachments: [
+                            {
+                                view: ctx2.getCurrentTexture().createView(),
+                                clearValue: { r: 0.05, g: 0.05, b: 0.05, a: 1 },
+                                loadOp: "clear",
+                                storeOp: "store",
+                            },
+                        ],
+                        depthStencilAttachment: {
+                            view: depthTex2.createView(),
+                            depthClearValue: 1.0,
+                            depthLoadOp: "clear",
+                            depthStoreOp: "store",
+                        },
+                    });
+                    pass.setPipeline(isoPipeline);
+                    pass.setBindGroup(0, bg2);
+                    if (gpuVertBuf && vertCount > 0) {
+                        pass.setVertexBuffer(0, gpuVertBuf);
+                        pass.draw(vertCount);
+                    }
+                    pass.end();
+                }
+                doToonPass(enc);
+
+                // Canvas 4: normal map, same plan projection as canvas 1
+                {
+                    const pass = enc.beginRenderPass({
+                        colorAttachments: [{
+                            view: ctx4.getCurrentTexture().createView(),
+                            clearValue: { r: 0.5, g: 0.5, b: 0.5, a: 1 },
+                            loadOp: "clear",
+                            storeOp: "store",
+                        }],
+                        depthStencilAttachment: {
+                            view: depthTex4.createView(),
+                            depthClearValue: 1.0,
+                            depthLoadOp: "clear",
+                            depthStoreOp: "store",
+                        },
+                    });
+                    pass.setPipeline(normalMapPipeline);
+                    pass.setBindGroup(0, bg4);
+                    if (gpuVertBuf && vertCount > 0) {
+                        pass.setVertexBuffer(0, gpuVertBuf);
+                        pass.draw(vertCount);
+                    }
+                    pass.end();
+                }
+
+                device.queue.submit([enc.finish()]);
+
+                requestAnimationFrame(frame);
+            }
+
+            requestAnimationFrame(frame);
+        </script>
+    </body>
+</html>

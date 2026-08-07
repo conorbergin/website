@@ -1,0 +1,33 @@
+---
+title: Hacking together my own SSG
+tags: [blog]
+date: 2025-06-12
+---
+
+My Sveltekit blog, despite its advantages, was making me uncomfortable. I had done a bunch of things to get it to work like a typical static site generator: Markdown, tags, prerendered html, etc. And I was afraid of touching it.
+
+I was attracted to this setup, from Eleventy, because it was slightly faster. Svelte is a rendering library, so it can modify the html and the url without actually making a new http request, the whole blog is a single page application. But I was rendering all the endpoints, so it was loading prerendered html when you first visited my site. And if you disabled JavaScript in your browser, it still worked? How I don't know, I don't think this works with any other rendering library.
+
+However, all this was completely unnecessary for a small personal website, and it made me unsure about modifiying it. So I updated my old Eleventy website, and found the differences in speed were really negligible, and I would get far more truck out of optimizing my images and embedded content. Any persistence I wanted between pages could be solved with local storage, and there was no longer any flashing between page loads, I think browsers have just got better at this, well Firefox has, I'm not sure Chrome ever had a problem. Also I now knew my website did not rely on JavaScript because it was primarily HTML with a few  scripts here and there, rather than a JS application that could fall back on HTML.
+
+But I wasn't really happy with Eleventy either, it was too flexible and too poorly documented, I was making markdown templates with YAML frontmatter and inline Liquid/Handlebars, I don't think I should have been allowed to do that. I tried a Zola, a single binary SSG that is a bit more opinionated, but I found this difficult to fit to my existing site.
+
+## Separating concerns with Make, Python and Pandoc
+
+Fundamentally, a static site is a platform target, you are building a cacheable website that can be deployed cheaply or for free on a number of services such as Netlify, Github Pages or Cloudflare Pages. You need to provide a file tree of HTML pages and other assets, or one HTML page and a load of minified JavaScript if you are making a webapp. You largely do not need to worry about webservers, content headers, DDoS attacks, these are the platforms problem.
+
+Given those requirements, you can make a static site by just writing HTML, if you only have a couple of pages, this is probably the correct course of action, but I have a blog with a bunch of similar pages, so I needed some sort of template. I chose Jinja2, because it has been around for a while and is available as a Python package. You could also just concatenate strings yourself in your favourite programming language, but I like to be able to have my HTML templates in their own text file, so I can edit them with syntax highlighting.
+
+The next thing I needed was a Markdown to HTML converter, I chose Pandoc, because it has been around for a long time and supports a wide range of document formats. It also has the ability to emit MathML.
+
+For my build system, I used GNU Make. I walked my content directory, and converted all my Markdown into partial HTML pages, and then ran these through Jinja2 to make my final webpages. The intermediate step allowed my to edit my template and regenerate the site without having to run all my pages through Pandoc, which is not instantaneous.
+
+I needed the title of my blog posts to appear as a \<h1\> element, a \<title\> element, and I wanted to have the same name appear as a link on a list of all my blog posts. In Eleventy this was pretty straightforward using its "data cascade", which I don't entirely understand, but it meant you could give pages variables and make them part of collections. I replicated this behavior by having a JSON file of the same name as the page it represented in my content directory. I had a title field in this JSON file which I could use for templating, and I could query the content directory to find all pages with dates between X and Y for example. Why not use frontmatter? I could have, but it makes parsing a bit more annoying, now I have two formats in a single file. Besides, I have a filesystem, why not use it?
+
+So with relatively little work, I have an incremental build system for my blog, and special pages like my index page can be generated with Python scripts. I can also generate site assests like images and SVGs and neatly integrate these steps into my Makefile, in fact, any commandline tool or language is avaiable to me, I no longer am restricted to NPM and its many dubious packages.
+
+I no longer have a reload on save dev server, I have to Ctrl+Shift+R to get a hard refresh, but I am fine with this, live servers have to inject some JavaScript to get this to work and I have never found it to be reliable.
+
+Where this setup shines is its flexibilty, I have a very convoluted method to generate my banner, but already using Python and Make everywhere means my asset generation pipeline is among equals. It was also very easy to start using Djot in place of Markdown, I just had to change my Pandoc command. I wouldn't have a clue how to do either of those things in Eleventy or any of the other SSGs I have used, it could be anthing from changing a config variable to extending the source code.
+
+If you are running into probelms with your static site generator (or full featured web framework), ask yourself what you are actually using it for. You are probably using a fraction of its functionality and finding that fraction lacking, and it might not take very long to reimplement everything you need in your favourite build sytem / programming language combo.

@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pen Experiments</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111; }
+canvas { display: block; touch-action: none; }
+#toolbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(30,30,30,0.88);
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 12px;
+  z-index: 10;
+  pointer-events: all;
+  user-select: none;
+  white-space: nowrap;
+}
+#toolbar label {
+  color: #aaa;
+  font: 12px/1.6 monospace;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+#toolbar select {
+  background: #222;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font: 12px monospace;
+  cursor: pointer;
+}
+#toolbar input[type=range] {
+  width: 90px;
+  accent-color: #888;
+  cursor: pointer;
+}
+#toolbar input[type=checkbox] {
+  width: 13px;
+  height: 13px;
+  accent-color: #888;
+  cursor: pointer;
+}
+#size-val { color: #eee; min-width: 3ch; text-align: right; }
+#btn-clear, #btn-gen, #btn-gen-x100 {
+  background: none;
+  color: #aaa;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font: 12px monospace;
+  cursor: pointer;
+}
+#btn-clear:hover, #btn-gen:hover, #btn-gen-x100:hover { color: #eee; border-color: #888; }
+#sel-gen-count {
+  width: 46px;
+  background: #222;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font: 12px monospace;
+}
+#stats {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: rgba(30,30,30,0.88);
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: 12px/1.8 monospace;
+  color: #aaa;
+  z-index: 10;
+  pointer-events: none;
+  white-space: pre;
+}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <label>color
+    <select id="sel-color">
+      <option value="0" selected>cream</option>
+      <option value="1">red</option>
+      <option value="2">blue</option>
+      <option value="3">green</option>
+      <option value="4">yellow</option>
+      <option value="5">purple</option>
+    </select>
+  </label>
+  <label>brush
+    <select id="sel-algo">
+      <option value="ribbon" selected>ribbon</option>
+      <option value="ribbon2">ribbon (gpu)</option>
+      <option value="ribbon-cr">ribbon (cr)</option>
+      <option value="squares">squares</option>
+      <option value="sdf">sdf</option>
+      <option value="stamp">stamp</option>
+    </select>
+  </label>
+  <label>size
+    <input type="range" id="sel-size" min="1" max="100" value="10">
+    <span id="size-val">10</span>
+  </label>
+  <label>pressure
+    <input type="checkbox" id="sel-pressure" checked>
+  </label>
+  <label>cache
+    <input type="checkbox" id="sel-cache" checked>
+  </label>
+  <label id="lbl-void-scale">void size
+    <input type="range" id="sel-void-scale" min="2" max="80" value="15">
+  </label>
+  <label id="lbl-void-density">void density
+    <input type="range" id="sel-void-density" min="0" max="90" value="30">
+  </label>
+  <label id="lbl-stamp-spacing">spacing
+    <input type="range" id="sel-stamp-spacing" min="1" max="100" value="8">
+  </label>
+  <label id="lbl-rdp-eps">rdp ε
+    <input type="range" id="sel-rdp-eps" min="1" max="40" value="4">
+  </label>
+  <button id="btn-clear">clear</button>
+  <input type="number" id="sel-gen-count" min="1" max="10000" value="10">
+  <button id="btn-gen">gen</button>
+  <button id="btn-gen-x100">×100</button>
+</div>
+<div id="stats"></div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas = document.getElementById('canvas');
+const gl = canvas.getContext('webgl');
+
+let fboTex = null, fbo = null; // created after GL setup
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  if (fboTex) {
+    gl.bindTexture(gl.TEXTURE_2D, fboTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  }
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ════════════════════════════════════════════════════════════════════════
+// Sections  (grep pattern shown)
+//
+//   WebGL programs    grep '// §'
+//     §flat           ribbon + squares    vertex: x, y, side                    stride 12
+//     §ribbon2        gpu-miter ribbon    vertex: x, y, prev, next, hw, side    stride 32
+//     §sdf            tapered capsule     vertex: x, y, pa, pb, ra, rb          stride 32
+//     §stamp          circle stamps       vertex: x, y, u, v, r                 stride 20
+//     §composite      FBO → screen        vertex: x, y  (clip space)            stride  8
+//   Other sections    grep '// ----'
+//     view transform, colors, geometry, erase, toolbar state,
+//     persistence, input, render loop
+//
+// Precision note: u_zoom must be `highp` in fragment shaders — GLSL ES 1.00
+// requires matching precision for uniforms declared in both stages.
+// Screen/world transform: screen = world * zoom + pan  (vertex shaders)
+// ════════════════════════════════════════════════════════════════════════
+
+function makeShader(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  return s;
+}
+function makeProgram(vert, frag) {
+  const p = gl.createProgram();
+  gl.attachShader(p, makeShader(gl.VERTEX_SHADER, vert));
+  gl.attachShader(p, makeShader(gl.FRAGMENT_SHADER, frag));
+  gl.linkProgram(p);
+  return p;
+}
+
+// §flat ── ribbon + squares ── vertex: x, y, side ── stride 12
+const VERT_FLAT = `
+  attribute vec2 a_pos;
+  attribute float a_side;
+  uniform vec2 u_res;
+  uniform float u_zoom;
+  uniform vec2 u_pan;
+  varying float v_side;
+  void main() {
+    vec2 screen = a_pos * u_zoom + u_pan;
+    vec2 clip = (screen / u_res) * 2.0 - 1.0;
+    gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+    v_side = a_side;
+  }
+`;
+const FRAG_FLAT = `
+  precision mediump float;
+  uniform vec4 u_color;
+  varying float v_side;
+  void main() {
+    vec4 opposite = vec4(1.0 - u_color.rgb, u_color.a);
+    gl_FragColor = mix(u_color, opposite, v_side);
+  }
+`;
+const progFlat   = makeProgram(VERT_FLAT, FRAG_FLAT);
+const aPosFlat   = gl.getAttribLocation(progFlat,  'a_pos');
+const aSideFlat  = gl.getAttribLocation(progFlat,  'a_side');
+const uResFlat   = gl.getUniformLocation(progFlat, 'u_res');
+const uColorFlat = gl.getUniformLocation(progFlat, 'u_color');
+const uZoomFlat  = gl.getUniformLocation(progFlat, 'u_zoom');
+const uPanFlat   = gl.getUniformLocation(progFlat, 'u_pan');
+
+// §ribbon2 ── gpu-miter ribbon ── vertex: x, y, prev_x, prev_y, next_x, next_y, hw, side ── stride 32
+// Miter join computed in the vertex shader; JS tessellation is a trivial data copy.
+const VERT_RIBBON2 = `
+  attribute vec2  a_pos;
+  attribute vec2  a_prev;
+  attribute vec2  a_next;
+  attribute float a_hw;
+  attribute float a_side;
+  uniform vec2  u_res;
+  uniform float u_zoom;
+  uniform vec2  u_pan;
+  varying float v_side;
+  void main() {
+    const float MITER_LIMIT = 4.0;
+    vec2 d1 = a_pos  - a_prev;
+    vec2 d2 = a_next - a_pos;
+    float l1 = length(d1), l2 = length(d2);
+    vec2 n1 = l1 > 0.0001 ? vec2(-d1.y,  d1.x) / l1 : vec2(0.0, 0.0);
+    vec2 n2 = l2 > 0.0001 ? vec2(-d2.y,  d2.x) / l2 : vec2(0.0, 0.0);
+    vec2 ms  = n1 + n2;
+    float ml = length(ms);
+    vec2 miter = ml > 0.0001 ? ms / ml : (l1 > 0.0001 ? n1 : n2);
+    vec2 refN  = l2 > 0.0001 ? n2 : n1;
+    float reach = a_hw / max(dot(miter, refN), 1.0 / MITER_LIMIT);
+    vec2 world  = a_pos + a_side * reach * miter;
+    vec2 screen = world * u_zoom + u_pan;
+    vec2 clip   = (screen / u_res) * 2.0 - 1.0;
+    gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+    v_side = a_side * 0.5 + 0.5;
+  }
+`;
+// Reuses FRAG_FLAT (same v_side gradient, no extra uniforms).
+const progRibbon2   = makeProgram(VERT_RIBBON2, FRAG_FLAT);
+const aPosR2        = gl.getAttribLocation(progRibbon2,  'a_pos');
+const aPrevR2       = gl.getAttribLocation(progRibbon2,  'a_prev');
+const aNextR2       = gl.getAttribLocation(progRibbon2,  'a_next');
+const aHwR2         = gl.getAttribLocation(progRibbon2,  'a_hw');
+const aSideR2       = gl.getAttribLocation(progRibbon2,  'a_side');
+const uResR2        = gl.getUniformLocation(progRibbon2, 'u_res');
+const uColorR2      = gl.getUniformLocation(progRibbon2, 'u_color');
+const uZoomR2       = gl.getUniformLocation(progRibbon2, 'u_zoom');
+const uPanR2        = gl.getUniformLocation(progRibbon2, 'u_pan');
+
+// §sdf ── tapered capsule ── vertex: x, y, pax, pay, pbx, pby, ra, rb ── stride 32
+const VERT_SDF = `
+  attribute vec2 a_pos;
+  attribute vec2 a_pa;
+  attribute vec2 a_pb;
+  attribute float a_ra;
+  attribute float a_rb;
+  uniform vec2 u_res;
+  uniform float u_zoom;
+  uniform vec2 u_pan;
+  varying vec2 v_pos;
+  varying vec2 v_pa;
+  varying vec2 v_pb;
+  varying float v_ra;
+  varying float v_rb;
+  void main() {
+    v_pos = a_pos; v_pa = a_pa; v_pb = a_pb; v_ra = a_ra; v_rb = a_rb;
+    vec2 screen = a_pos * u_zoom + u_pan;
+    vec2 clip = (screen / u_res) * 2.0 - 1.0;
+    gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+  }
+`;
+const FRAG_SDF = `
+  precision mediump float;
+  uniform vec4        u_color;
+  uniform highp float u_zoom;
+  uniform float       u_void_scale;
+  uniform float       u_void_density;
+  varying vec2  v_pos;
+  varying vec2  v_pa;
+  varying vec2  v_pb;
+  varying float v_ra;
+  varying float v_rb;
+
+  vec2 voidHash(vec2 p) {
+    return fract(sin(vec2(dot(p, vec2(127.1, 311.7)),
+                         dot(p, vec2(269.5, 183.3)))) * 43758.5453);
+  }
+
+  // Returns 1 on the concrete surface, 0 inside a void.
+  // Divides world space into a grid of cells (size u_void_scale).
+  // Each cell independently decides whether it hosts a void (hash < density).
+  // Void centres are jittered within their cell; radius is 0.35 cell units.
+  float concreteMask(vec2 p) {
+    vec2  sp   = p / u_void_scale;
+    vec2  cell = floor(sp);
+    float best = 999.0;
+    for (int dx = -1; dx <= 1; dx++) {
+      for (int dy = -1; dy <= 1; dy++) {
+        vec2  n      = cell + vec2(float(dx), float(dy));
+        vec2  h      = voidHash(n);
+        vec2  center = n + h * 0.8 + 0.1;
+        float d      = length(sp - center);
+        float active = step(h.x, u_void_density);
+        best = min(best, mix(999.0, d, active));
+      }
+    }
+    return step(0.35, best);
+  }
+
+  void main() {
+    vec2  ba = v_pb - v_pa;
+    vec2  pa = v_pos - v_pa;
+    float h  = length(ba);
+
+    float d;
+    if (h < 0.0001) {
+      d = length(pa) - max(v_ra, v_rb);
+    } else if (v_ra >= v_rb + h) {
+      d = length(pa) - v_ra;
+    } else if (v_rb >= v_ra + h) {
+      d = length(v_pos - v_pb) - v_rb;
+    } else {
+      // Exact tapered capsule SDF (IQ rounded-cone formula).
+      // bv = sine of the cone half-angle; av = cosine.
+      // The belt boundary is the external tangent line to both circles,
+      // whose distance is dot(q, (av, bv)) - v_ra.
+      vec2  n     = ba / h;
+      float axial = dot(pa, n);
+      float perp  = abs(pa.x * n.y - pa.y * n.x);
+      vec2  q     = vec2(perp, axial);
+      float bv    = (v_ra - v_rb) / h;
+      float av    = sqrt(1.0 - bv * bv);
+      float k     = dot(q, vec2(-bv, av));
+      if      (k < 0.0)    d = length(q) - v_ra;
+      else if (k > av * h) d = length(q - vec2(0.0, h)) - v_rb;
+      else                 d = dot(q, vec2(av, bv)) - v_ra;
+    }
+
+    float aa    = 0.5 / u_zoom;
+    float alpha = (1.0 - smoothstep(-aa, aa, d)) * concreteMask(v_pos);
+    if (alpha <= 0.0) discard;
+    gl_FragColor = vec4(u_color.rgb, u_color.a * alpha);
+  }
+`;
+const progSDF         = makeProgram(VERT_SDF, FRAG_SDF);
+const aPosSDF         = gl.getAttribLocation(progSDF,  'a_pos');
+const aPaSDF          = gl.getAttribLocation(progSDF,  'a_pa');
+const aPbSDF          = gl.getAttribLocation(progSDF,  'a_pb');
+const aRaSDF          = gl.getAttribLocation(progSDF,  'a_ra');
+const aRbSDF          = gl.getAttribLocation(progSDF,  'a_rb');
+const uResSDF         = gl.getUniformLocation(progSDF, 'u_res');
+const uColorSDF       = gl.getUniformLocation(progSDF, 'u_color');
+const uZoomSDF        = gl.getUniformLocation(progSDF, 'u_zoom');
+const uPanSDF         = gl.getUniformLocation(progSDF, 'u_pan');
+const uVoidScaleSDF   = gl.getUniformLocation(progSDF, 'u_void_scale');
+const uVoidDensitySDF = gl.getUniformLocation(progSDF, 'u_void_density');
+
+// §stamp ── circle stamps ── vertex: x, y, u, v, r ── stride 20
+const VERT_STAMP = `
+  attribute vec2  a_pos;
+  attribute vec2  a_uv;
+  attribute float a_r;
+  uniform vec2        u_res;
+  uniform float       u_zoom;
+  uniform vec2        u_pan;
+  varying vec2  v_uv;
+  varying float v_r;
+  void main() {
+    vec2 screen = a_pos * u_zoom + u_pan;
+    vec2 clip = (screen / u_res) * 2.0 - 1.0;
+    gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+    v_uv = a_uv;
+    v_r  = a_r;
+  }
+`;
+const FRAG_STAMP = `
+  precision mediump float;
+  uniform vec4        u_color;
+  uniform highp float u_zoom;
+  varying vec2  v_uv;
+  varying float v_r;
+  void main() {
+    float d     = length(v_uv) - 1.0;
+    float aa    = 1.0 / (v_r * u_zoom);
+    float alpha = 1.0 - smoothstep(-aa, aa, d);
+    if (alpha <= 0.0) discard;
+    gl_FragColor = vec4(u_color.rgb, u_color.a * alpha);
+  }
+`;
+const progStamp  = makeProgram(VERT_STAMP, FRAG_STAMP);
+const aPosStamp  = gl.getAttribLocation(progStamp,  'a_pos');
+const aUvStamp   = gl.getAttribLocation(progStamp,  'a_uv');
+const aRStamp    = gl.getAttribLocation(progStamp,  'a_r');
+const uResStamp  = gl.getUniformLocation(progStamp, 'u_res');
+const uColorStamp= gl.getUniformLocation(progStamp, 'u_color');
+const uZoomStamp = gl.getUniformLocation(progStamp, 'u_zoom');
+const uPanStamp  = gl.getUniformLocation(progStamp, 'u_pan');
+
+// §composite ── FBO → screen ── vertex: x, y (clip space) ── stride 8
+// SDF strokes render to an offscreen FBO with MAX blend to avoid alpha
+// accumulation at overlapping segment edges, then composite to screen.
+const VERT_COMP = `
+  attribute vec2 a_pos;
+  varying vec2 v_uv;
+  void main() {
+    v_uv = a_pos * 0.5 + 0.5;
+    gl_Position = vec4(a_pos, 0.0, 1.0);
+  }
+`;
+const FRAG_COMP = `
+  precision mediump float;
+  uniform sampler2D u_tex;
+  varying vec2 v_uv;
+  void main() { gl_FragColor = texture2D(u_tex, v_uv); }
+`;
+const progComp = makeProgram(VERT_COMP, FRAG_COMP);
+const aPosComp = gl.getAttribLocation(progComp,  'a_pos');
+const uTexComp = gl.getUniformLocation(progComp, 'u_tex');
+
+// ── buffers / blend state / FBO ──
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+const extMinMax = gl.getExtension('EXT_blend_minmax');
+
+const compBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, compBuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+
+if (extMinMax) {
+  fboTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, fboTex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
+// ---- view transform ----
+// Stroke data is stored in world space. Screen = world * zoom + pan.
+
+let zoom = 1.0;
+let panX = 0.0, panY = 0.0;
+loadView();
+
+function screenToWorld(sx, sy) {
+  return [(sx - panX) / zoom, (sy - panY) / zoom];
+}
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor  = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+  const zoomNew = Math.min(10, Math.max(0.1, zoom * factor));
+  const scale   = zoomNew / zoom;
+  panX = e.clientX - (e.clientX - panX) * scale;
+  panY = e.clientY - (e.clientY - panY) * scale;
+  zoom = zoomNew;
+  saveView();
+}, { passive: false });
+
+// Tracks which attrib locations are currently enabled so we can
+// disable ones not used by the incoming program before each draw.
+let enabledAttribs = new Set();
+function configureAttribs(specs) {
+  const next = new Set(specs.map(s => s.loc));
+  for (const loc of enabledAttribs) {
+    if (!next.has(loc)) gl.disableVertexAttribArray(loc);
+  }
+  for (const { loc, size, stride, offset } of specs) {
+    if (!enabledAttribs.has(loc)) gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, offset);
+  }
+  enabledAttribs = next;
+}
+
+// ---- colors ----
+
+const COLORS = [
+  [0.92, 0.88, 0.78, 1.0],  // cream
+  [0.88, 0.33, 0.33, 1.0],  // red
+  [0.33, 0.54, 0.88, 1.0],  // blue
+  [0.33, 0.77, 0.48, 1.0],  // green
+  [0.88, 0.77, 0.33, 1.0],  // yellow
+  [0.60, 0.33, 0.88, 1.0],  // purple
+];
+
+// ---- geometry ----
+//
+// Stroke data uses a struct-of-arrays layout:
+//   stroke.xs[], stroke.ys[], stroke.pressures[]
+// instead of an array-of-structs [{x,y,pressure}…].
+// This keeps coordinate data contiguous in memory and avoids
+// per-point object allocation.
+
+const MITER_LIMIT = 4;
+
+// Returns the half-width for point i, optionally scaled by pressure.
+// With pressure off: returns baseHW.
+// With pressure on:  p=0.5 (mouse default) → baseHW, p=1 → baseHW×2, p→0 → 0.5px.
+function pointHW(pressures, i, baseHW, usePressure) {
+  if (!usePressure) return baseHW;
+  return Math.max(0.5, baseHW * (pressures[i] ?? 0.5) * 2);
+}
+
+// Ribbon: miter-joined triangle strip.
+function tessellateRibbon(stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 2) return null;
+
+  const baseHW = stroke.size / 2;
+  const up     = stroke.usePressure;
+
+  // Segment normals (left-facing, unit length)
+  const snx = new Array(n - 1);
+  const sny = new Array(n - 1);
+  for (let i = 0; i < n - 1; i++) {
+    const dx = xs[i+1] - xs[i];
+    const dy = ys[i+1] - ys[i];
+    const l  = Math.hypot(dx, dy) || 1;
+    snx[i] = -dy / l;
+    sny[i] =  dx / l;
+  }
+
+  const verts = new Float32Array(n * 6); // 2 verts × 3 floats per point
+  for (let i = 0; i < n; i++) {
+    const hw = pointHW(pressures, i, baseHW, up);
+    let nx, ny, reach;
+    if (i === 0) {
+      nx = snx[0]; ny = sny[0]; reach = hw;
+    } else if (i === n - 1) {
+      nx = snx[i-1]; ny = sny[i-1]; reach = hw;
+    } else {
+      const mx = snx[i-1] + snx[i];
+      const my = sny[i-1] + sny[i];
+      const ml = Math.hypot(mx, my) || 1;
+      nx = mx / ml; ny = my / ml;
+      const d = nx * snx[i-1] + ny * sny[i-1];
+      reach = d > 1 / MITER_LIMIT ? hw / d : hw * MITER_LIMIT;
+    }
+    const base = i * 6;
+    verts[base]   = xs[i] - nx * reach;
+    verts[base+1] = ys[i] - ny * reach;
+    verts[base+2] = 0.0;
+    verts[base+3] = xs[i] + nx * reach;
+    verts[base+4] = ys[i] + ny * reach;
+    verts[base+5] = 1.0;
+  }
+  return { data: verts, mode: gl.TRIANGLE_STRIP, vertexCount: n * 2 };
+}
+
+// Ribbon2: 2 verts per spine point, adjacency packed in — miter done in vertex shader.
+function tessellateRibbon2(stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 2) return null;
+
+  const baseHW = stroke.size / 2;
+  const up     = stroke.usePressure;
+
+  // 2 verts per point × 8 floats: x,y, px,py, nx,ny, hw, side
+  const verts = new Float32Array(n * 16);
+  for (let i = 0; i < n; i++) {
+    const hw = pointHW(pressures, i, baseHW, up);
+    const px = i > 0     ? xs[i-1] : xs[i];
+    const py = i > 0     ? ys[i-1] : ys[i];
+    const nx = i < n - 1 ? xs[i+1] : xs[i];
+    const ny = i < n - 1 ? ys[i+1] : ys[i];
+    const b  = i * 16;
+    verts[b]    = xs[i]; verts[b+1]  = ys[i]; verts[b+2]  = px; verts[b+3]  = py;
+    verts[b+4]  = nx;    verts[b+5]  = ny;    verts[b+6]  = hw; verts[b+7]  = -1.0;
+    verts[b+8]  = xs[i]; verts[b+9]  = ys[i]; verts[b+10] = px; verts[b+11] = py;
+    verts[b+12] = nx;    verts[b+13] = ny;    verts[b+14] = hw; verts[b+15] =  1.0;
+  }
+  return { data: verts, mode: gl.TRIANGLE_STRIP, vertexCount: n * 2 };
+}
+
+// Squares: one axis-aligned quad (2 triangles) per point.
+function tessellateSquares(stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 1) return null;
+
+  const baseHW = stroke.size / 2;
+  const up     = stroke.usePressure;
+
+  const verts = new Float32Array(n * 18); // 6 verts × 3 floats per point
+  for (let i = 0; i < n; i++) {
+    const hw = pointHW(pressures, i, baseHW, up);
+    const x0 = xs[i] - hw, y0 = ys[i] - hw;
+    const x1 = xs[i] + hw, y1 = ys[i] + hw;
+    const base = i * 18;
+    verts[base]    = x0; verts[base+1]  = y0; verts[base+2]  = 0.5;
+    verts[base+3]  = x1; verts[base+4]  = y0; verts[base+5]  = 0.5;
+    verts[base+6]  = x0; verts[base+7]  = y1; verts[base+8]  = 0.5;
+    verts[base+9]  = x1; verts[base+10] = y0; verts[base+11] = 0.5;
+    verts[base+12] = x1; verts[base+13] = y1; verts[base+14] = 0.5;
+    verts[base+15] = x0; verts[base+16] = y1; verts[base+17] = 0.5;
+  }
+  return { data: verts, mode: gl.TRIANGLES, vertexCount: n * 6 };
+}
+
+// SDF: one bounding quad per segment, SDF evaluated per-fragment.
+function tessellateSDFStroke(stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 2) return null;
+
+  const baseHW = stroke.size / 2;
+  const up = stroke.usePressure;
+  const PAD = 1.0;
+  const segs = n - 1;
+
+  // 6 verts per segment, 8 floats per vert: x,y, pax,pay, pbx,pby, ra,rb
+  const verts = new Float32Array(segs * 48);
+  for (let i = 0; i < segs; i++) {
+    const ax = xs[i], ay = ys[i], bx = xs[i+1], by = ys[i+1];
+    const ra = pointHW(pressures, i,   baseHW, up);
+    const rb = pointHW(pressures, i+1, baseHW, up);
+    const x0 = Math.min(ax - ra, bx - rb) - PAD;
+    const y0 = Math.min(ay - ra, by - rb) - PAD;
+    const x1 = Math.max(ax + ra, bx + rb) + PAD;
+    const y1 = Math.max(ay + ra, by + rb) + PAD;
+    const corners = [x0,y0, x1,y0, x0,y1, x1,y0, x1,y1, x0,y1];
+    for (let v = 0; v < 6; v++) {
+      const b = (i * 6 + v) * 8;
+      verts[b]   = corners[v*2]; verts[b+1] = corners[v*2+1];
+      verts[b+2] = ax;           verts[b+3] = ay;
+      verts[b+4] = bx;           verts[b+5] = by;
+      verts[b+6] = ra;           verts[b+7] = rb;
+    }
+  }
+  return { data: verts, mode: gl.TRIANGLES, vertexCount: segs * 6 };
+}
+
+// Stamp: one axis-aligned quad per stamp placed every spacing world units.
+// Vertex layout: x, y, u, v, r — stride 20.
+function tessellateStamp(stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 1) return null;
+
+  const baseHW  = stroke.size / 2;
+  const up      = stroke.usePressure;
+  const spacing = stroke.stampSpacing ?? stroke.size;
+
+  const verts = [];
+  let accumulated = 0;
+
+  function emitStamp(cx, cy, r) {
+    // two triangles: 6 verts of (x, y, u, v, r)
+    verts.push(
+      cx-r, cy-r, -1,-1, r,   cx+r, cy-r,  1,-1, r,   cx-r, cy+r, -1, 1, r,
+      cx+r, cy-r,  1,-1, r,   cx+r, cy+r,  1, 1, r,   cx-r, cy+r, -1, 1, r,
+    );
+  }
+
+  emitStamp(xs[0], ys[0], pointHW(pressures, 0, baseHW, up));
+
+  for (let i = 1; i < n; i++) {
+    const px = xs[i-1], py = ys[i-1];
+    const cx = xs[i],   cy = ys[i];
+    const segLen = Math.hypot(cx - px, cy - py);
+    if (segLen < 0.0001) continue;
+    accumulated += segLen;
+    const ra = pointHW(pressures, i-1, baseHW, up);
+    const rb = pointHW(pressures, i,   baseHW, up);
+    while (accumulated >= spacing) {
+      accumulated -= spacing;
+      const t = 1.0 - accumulated / segLen;
+      emitStamp(
+        px + t * (cx - px),
+        py + t * (cy - py),
+        ra + t * (rb - ra),
+      );
+    }
+  }
+
+  if (!verts.length) return null;
+  return { data: new Float32Array(verts), mode: gl.TRIANGLES, vertexCount: verts.length / 5 };
+}
+
+// RDP: simplify xs/ys/pressures in-place to within epsilon world units.
+// Applied once at commit; the live stroke is always drawn at full resolution.
+function applyRDP(stroke, eps) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 3) return;
+
+  function reduce(lo, hi, out) {
+    if (hi <= lo + 1) return;
+    const ax = xs[lo], ay = ys[lo];
+    const dx = xs[hi] - ax, dy = ys[hi] - ay;
+    const len = Math.hypot(dx, dy);
+    let maxD = 0, maxI = lo + 1;
+    for (let i = lo + 1; i < hi; i++) {
+      const d = len < 1e-10
+        ? Math.hypot(xs[i] - ax, ys[i] - ay)
+        : Math.abs((xs[i] - ax) * dy - (ys[i] - ay) * dx) / len;
+      if (d > maxD) { maxD = d; maxI = i; }
+    }
+    if (maxD > eps) {
+      reduce(lo, maxI, out);
+      out.push(maxI);
+      reduce(maxI, hi, out);
+    }
+  }
+
+  const keep = [0];
+  reduce(0, n - 1, keep);
+  keep.push(n - 1);
+  stroke.xs        = keep.map(i => xs[i]);
+  stroke.ys        = keep.map(i => ys[i]);
+  stroke.pressures = keep.map(i => pressures[i]);
+}
+
+// Catmull-Rom: evaluate the control points as a CR spline at adaptive density,
+// then feed the resulting point cloud into the standard miter-join tessellator.
+function tessellateRibbonCR(stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n = xs.length;
+  if (n < 2) return tessellateRibbon(stroke);
+
+  // Phantom endpoints: mirror so the curve passes cleanly through the first/last point.
+  function ctrl(i) {
+    if (i < 0)  return [2*xs[0]    - xs[1],    2*ys[0]    - ys[1],    pressures[0]];
+    if (i >= n) return [2*xs[n-1]  - xs[n-2],  2*ys[n-1]  - ys[n-2],  pressures[n-1]];
+    return [xs[i], ys[i], pressures[i]];
+  }
+
+  function cr(a, b, c, d, t) {
+    const t2 = t*t, t3 = t2*t;
+    return 0.5*((2*b) + (-a+c)*t + (2*a-5*b+4*c-d)*t2 + (-a+3*b-3*c+d)*t3);
+  }
+
+  const exs = [], eys = [], eps = [];
+  for (let i = 0; i < n - 1; i++) {
+    const [x0,y0,p0] = ctrl(i-1);
+    const [x1,y1,p1] = ctrl(i);
+    const [x2,y2,p2] = ctrl(i+1);
+    const [x3,y3,p3] = ctrl(i+2);
+    const segLen  = Math.hypot(x2-x1, y2-y1);
+    const subdivs = Math.min(32, Math.max(2, Math.ceil(segLen / Math.max(stroke.size * 0.5, 1))));
+    for (let j = 0; j < subdivs; j++) {
+      const t = j / subdivs;
+      exs.push(cr(x0,x1,x2,x3,t));
+      eys.push(cr(y0,y1,y2,y3,t));
+      eps.push(Math.max(0, cr(p0,p1,p2,p3,t)));
+    }
+  }
+  exs.push(xs[n-1]); eys.push(ys[n-1]); eps.push(pressures[n-1]);
+
+  return tessellateRibbon({ ...stroke, xs: exs, ys: eys, pressures: eps });
+}
+
+function buildGeometry(stroke) {
+  switch (stroke.algo) {
+    case "ribbon2":   return tessellateRibbon2(stroke);
+    case "ribbon-cr": return tessellateRibbonCR(stroke);
+    case "squares": return tessellateSquares(stroke);
+    case "sdf":     return tessellateSDFStroke(stroke);
+    case "stamp":   return tessellateStamp(stroke);
+    default:        return tessellateRibbon(stroke);
+  }
+}
+
+// ---- erase ----
+
+function hitsTaperedSegment(px, py, ax, ay, bx, by, ra, rb) {
+  const dx = bx - ax, dy = by - ay;
+  const h  = Math.hypot(dx, dy);
+  if (h < 0.0001)    return Math.hypot(px - ax, py - ay) <= Math.max(ra, rb);
+  if (ra >= rb + h)  return Math.hypot(px - ax, py - ay) <= ra;
+  if (rb >= ra + h)  return Math.hypot(px - bx, py - by) <= rb;
+  const nx = dx / h, ny = dy / h;
+  const ex = px - ax, ey = py - ay;
+  const axial = ex * nx + ey * ny;
+  const perp  = Math.abs(ex * ny - ey * nx);
+  const bv = (ra - rb) / h;
+  const av = Math.sqrt(1 - bv * bv);
+  const k  = -bv * perp + av * axial;
+  let d;
+  if      (k < 0)      d = Math.hypot(perp, axial) - ra;
+  else if (k > av * h) d = Math.hypot(perp, axial - h) - rb;
+  else                 d = av * perp + bv * axial - ra;
+  return d <= 0;
+}
+
+function hitsStroke(px, py, stroke) {
+  const { xs, ys, pressures } = stroke;
+  const n      = xs.length;
+  const baseHW = stroke.size / 2;
+  if (n === 1) {
+    return Math.hypot(px - xs[0], py - ys[0]) <= pointHW(pressures, 0, baseHW, stroke.usePressure);
+  }
+  for (let i = 0; i < n - 1; i++) {
+    const ra = pointHW(pressures, i,   baseHW, stroke.usePressure);
+    const rb = pointHW(pressures, i+1, baseHW, stroke.usePressure);
+    if (hitsTaperedSegment(px, py, xs[i], ys[i], xs[i+1], ys[i+1], ra, rb)) return true;
+  }
+  return false;
+}
+
+function freeStroke(stroke) {
+  if (stroke._buf) { gl.deleteBuffer(stroke._buf); stroke._buf = null; }
+}
+
+function eraseAt(sx, sy) {
+  const [px, py] = screenToWorld(sx, sy);
+  for (let i = strokes.length - 1; i >= 0; i--) {
+    if (hitsStroke(px, py, strokes[i])) {
+      freeStroke(strokes[i]);
+      strokes.splice(i, 1);
+    }
+  }
+}
+
+// ---- generate (stress test) ----
+
+function generateStrokes(count) {
+  const algo  = activeAlgo();
+  const size  = activeSize();
+  const wx0   = -panX / zoom;
+  const wx1   = (canvas.width  - panX) / zoom;
+  const wy0   = -panY / zoom;
+  const wy1   = (canvas.height - panY) / zoom;
+  const POINTS = 24;
+
+  for (let i = 0; i < count; i++) {
+    const cy    = wy0 + ((i + 0.5) / count) * (wy1 - wy0);
+    const stroke = {
+      xs: [], ys: [], pressures: [],
+      color:        COLORS[i % COLORS.length],
+      algo, size,
+      usePressure:  false,
+      voidScale:    activeVoidScale(),
+      voidDensity:  activeVoidDensity(),
+      stampSpacing: activeStampSpacing(),
+    };
+    for (let j = 0; j < POINTS; j++) {
+      const t = j / (POINTS - 1);
+      stroke.xs.push(wx0 + t * (wx1 - wx0));
+      stroke.ys.push(cy + (Math.random() - 0.5) * size * 0.5);
+      stroke.pressures.push(0.3 + Math.random() * 0.7);
+    }
+    strokes.push(stroke);
+  }
+  saveStrokes();
+}
+
+// ---- toolbar state ----
+
+const selColor    = document.getElementById('sel-color');
+const selAlgo     = document.getElementById('sel-algo');
+const selSize     = document.getElementById('sel-size');
+const selPressure = document.getElementById('sel-pressure');
+const selCache    = document.getElementById('sel-cache');
+const sizeVal     = document.getElementById('size-val');
+
+selSize.addEventListener('input', () => { sizeVal.textContent = selSize.value; });
+document.getElementById('btn-clear').addEventListener('click', () => {
+  strokes.forEach(freeStroke);
+  strokes.length = 0;
+  saveStrokes();
+});
+const selGenCount = document.getElementById('sel-gen-count');
+document.getElementById('btn-gen').addEventListener('click', () => {
+  generateStrokes(+selGenCount.value);
+});
+document.getElementById('btn-gen-x100').addEventListener('click', () => {
+  generateStrokes(+selGenCount.value * 100);
+});
+
+const selVoidScale     = document.getElementById('sel-void-scale');
+const selVoidDensity   = document.getElementById('sel-void-density');
+const selStampSpacing  = document.getElementById('sel-stamp-spacing');
+const selRdpEps        = document.getElementById('sel-rdp-eps');
+const lblVoidScale     = document.getElementById('lbl-void-scale');
+const lblVoidDensity   = document.getElementById('lbl-void-density');
+const lblStampSpacing  = document.getElementById('lbl-stamp-spacing');
+const lblRdpEps        = document.getElementById('lbl-rdp-eps');
+
+function activeColor()        { return COLORS[+selColor.value]; }
+function activeAlgo()         { return selAlgo.value; }
+function activeSize()         { return +selSize.value; }
+function activePressure()     { return selPressure.checked; }
+function activeVoidScale()    { return +selVoidScale.value; }
+function activeVoidDensity()  { return +selVoidDensity.value / 100; }
+function activeStampSpacing() { return +selStampSpacing.value; }
+function activeRdpEps()       { return +selRdpEps.value; }
+
+function updateToolbarVis() {
+  const algo = selAlgo.value;
+  lblVoidScale.style.display    = algo === 'sdf'       ? '' : 'none';
+  lblVoidDensity.style.display  = algo === 'sdf'       ? '' : 'none';
+  lblStampSpacing.style.display = algo === 'stamp'     ? '' : 'none';
+  lblRdpEps.style.display       = algo === 'ribbon-cr' ? '' : 'none';
+}
+selAlgo.addEventListener('change', updateToolbarVis);
+updateToolbarVis();
+
+// ---- persistence ----
+
+const STORAGE_KEY = 'pen_experiments_strokes_v2';
+const VIEW_KEY    = 'pen_experiments_view';
+
+function saveStrokes() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(strokes, (k, v) =>
+      (k === '_geo' || k === '_buf' || k === '_bbox') ? undefined : v
+    ));
+  } catch (_) {}
+}
+
+function loadStrokes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return [];
+}
+
+function saveView() {
+  try { localStorage.setItem(VIEW_KEY, JSON.stringify({ zoom, panX, panY })); } catch (_) {}
+}
+
+function loadView() {
+  try {
+    const v = JSON.parse(localStorage.getItem(VIEW_KEY) ?? 'null');
+    if (v) { zoom = v.zoom ?? 1; panX = v.panX ?? 0; panY = v.panY ?? 0; }
+  } catch (_) {}
+}
+
+// ---- input ----
+//
+// Stroke layout (struct of arrays):
+//   { xs: number[], ys: number[], pressures: number[],
+//     color, algo, size, usePressure }
+//
+// Points closer than 1px apart are dropped before storage.
+
+const strokes = loadStrokes();
+let   current = null;
+let   erasing = false;
+let   panning = false;
+let   panStartX = 0, panStartY = 0;
+
+function strokeBBox(stroke) {
+  if (stroke._bbox) return stroke._bbox;
+  const { xs, ys, size } = stroke;
+  let x0 = xs[0], x1 = xs[0], y0 = ys[0], y1 = ys[0];
+  for (let i = 1; i < xs.length; i++) {
+    if (xs[i] < x0) x0 = xs[i]; else if (xs[i] > x1) x1 = xs[i];
+    if (ys[i] < y0) y0 = ys[i]; else if (ys[i] > y1) y1 = ys[i];
+  }
+  const pad = size; // max radius with pressure=1: pointHW = size/2 * 1 * 2 = size
+  return (stroke._bbox = [x0 - pad, y0 - pad, x1 + pad, y1 + pad]);
+}
+
+function isVisible(stroke) {
+  const [bx0, by0, bx1, by1] = strokeBBox(stroke);
+  const vx0 = -panX / zoom,                  vy0 = -panY / zoom;
+  const vx1 = (canvas.width  - panX) / zoom, vy1 = (canvas.height - panY) / zoom;
+  return bx1 >= vx0 && bx0 <= vx1 && by1 >= vy0 && by0 <= vy1;
+}
+
+function appendPoint(stroke, x, y, pressure) {
+  const n = stroke.xs.length;
+  if (n > 0) {
+    const dx = x - stroke.xs[n-1];
+    const dy = y - stroke.ys[n-1];
+    if (dx*dx + dy*dy < 1) return; // less than 1px away — discard
+  }
+  stroke._bbox = null; // bbox grows as points are added
+  stroke.xs.push(x);
+  stroke.ys.push(y);
+  stroke.pressures.push(pressure);
+}
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  if (e.button === 1) {
+    panning = true;
+    panStartX = e.clientX - panX;
+    panStartY = e.clientY - panY;
+    e.preventDefault();
+  } else if (e.button === 2) {
+    erasing = true;
+    eraseAt(e.clientX, e.clientY);
+  } else {
+    const [wx, wy] = screenToWorld(e.clientX, e.clientY);
+    current = {
+      xs: [], ys: [], pressures: [],
+      color: activeColor(),
+      algo: activeAlgo(),
+      size: activeSize(),
+      usePressure: activePressure(),
+      voidScale: activeVoidScale(),
+      voidDensity: activeVoidDensity(),
+      stampSpacing: activeStampSpacing(),
+      rdpEps: activeRdpEps(),
+    };
+    appendPoint(current, wx, wy, e.pressure);
+  }
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (panning) {
+    panX = e.clientX - panStartX;
+    panY = e.clientY - panStartY;
+  } else if (erasing) {
+    eraseAt(e.clientX, e.clientY);
+  } else if (current) {
+    const [wx, wy] = screenToWorld(e.clientX, e.clientY);
+    appendPoint(current, wx, wy, e.pressure);
+  }
+});
+
+canvas.addEventListener('pointerup', e => {
+  if (e.button === 1)      { panning = false; saveView(); }
+  else if (e.button === 2) { erasing = false; saveStrokes(); }
+  else if (current)        { commitCurrent(); }
+});
+
+canvas.addEventListener('pointercancel', () => {
+  panning = false;
+  erasing = false;
+  if (current) commitCurrent();
+});
+
+function commitCurrent() {
+  strokeBBox(current); // cache from full-res points before RDP may remove extremes
+  if (current.algo === 'ribbon-cr') applyRDP(current, current.rdpEps ?? 4);
+  strokes.push(current);
+  current = null;
+  saveStrokes();
+}
+
+// ---- render loop ----
+
+const statsEl = document.getElementById('stats');
+const frameStats = { tessMs: 0, drawMs: 0, verts: 0, culled: 0 };
+
+function drawStroke(stroke) {
+  const live  = stroke === current;
+  const cache = !live && selCache.checked;
+
+  // Tessellation
+  let geo;
+  if (!cache || !stroke._geo) {
+    const t0 = performance.now();
+    geo = buildGeometry(stroke);
+    frameStats.tessMs += performance.now() - t0;
+    if (cache) stroke._geo = geo;
+  } else {
+    geo = stroke._geo;
+  }
+  if (!geo) return;
+  frameStats.verts += geo.vertexCount;
+
+  // GPU upload
+  if (cache && stroke._buf) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, stroke._buf);
+  } else {
+    const glBuf = cache ? gl.createBuffer() : buf;
+    gl.bindBuffer(gl.ARRAY_BUFFER, glBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, geo.data, cache ? gl.STATIC_DRAW : gl.DYNAMIC_DRAW);
+    if (cache) stroke._buf = glBuf;
+  }
+
+  let t0;
+  if (stroke.algo === 'sdf') {
+    if (fbo) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.blendEquation(extMinMax.MAX_EXT);
+      gl.blendFunc(gl.ONE, gl.ONE);
+    }
+    gl.useProgram(progSDF);
+    configureAttribs([
+      { loc: aPosSDF, size: 2, stride: 32, offset: 0  },
+      { loc: aPaSDF,  size: 2, stride: 32, offset: 8  },
+      { loc: aPbSDF,  size: 2, stride: 32, offset: 16 },
+      { loc: aRaSDF,  size: 1, stride: 32, offset: 24 },
+      { loc: aRbSDF,  size: 1, stride: 32, offset: 28 },
+    ]);
+    gl.uniform2f(uResSDF,    canvas.width, canvas.height);
+    gl.uniform4fv(uColorSDF, stroke.color);
+    gl.uniform1f(uZoomSDF,   zoom);
+    gl.uniform2f(uPanSDF,    panX, panY);
+    gl.uniform1f(uVoidScaleSDF,   stroke.voidScale   ?? activeVoidScale());
+    gl.uniform1f(uVoidDensitySDF, stroke.voidDensity ?? activeVoidDensity());
+    t0 = performance.now();
+    gl.drawArrays(geo.mode, 0, geo.vertexCount);
+    frameStats.drawMs += performance.now() - t0;
+    if (fbo) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.blendEquation(gl.FUNC_ADD);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.bindBuffer(gl.ARRAY_BUFFER, compBuf);
+      gl.useProgram(progComp);
+      configureAttribs([{ loc: aPosComp, size: 2, stride: 8, offset: 0 }]);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, fboTex);
+      gl.uniform1i(uTexComp, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+  } else if (stroke.algo === 'ribbon2') {
+    gl.useProgram(progRibbon2);
+    configureAttribs([
+      { loc: aPosR2,  size: 2, stride: 32, offset: 0  },
+      { loc: aPrevR2, size: 2, stride: 32, offset: 8  },
+      { loc: aNextR2, size: 2, stride: 32, offset: 16 },
+      { loc: aHwR2,   size: 1, stride: 32, offset: 24 },
+      { loc: aSideR2, size: 1, stride: 32, offset: 28 },
+    ]);
+    gl.uniform2f(uResR2,    canvas.width, canvas.height);
+    gl.uniform4fv(uColorR2, stroke.color);
+    gl.uniform1f(uZoomR2,   zoom);
+    gl.uniform2f(uPanR2,    panX, panY);
+    t0 = performance.now();
+    gl.drawArrays(geo.mode, 0, geo.vertexCount);
+    frameStats.drawMs += performance.now() - t0;
+  } else if (stroke.algo === 'stamp') {
+    gl.useProgram(progStamp);
+    configureAttribs([
+      { loc: aPosStamp, size: 2, stride: 20, offset: 0  },
+      { loc: aUvStamp,  size: 2, stride: 20, offset: 8  },
+      { loc: aRStamp,   size: 1, stride: 20, offset: 16 },
+    ]);
+    gl.uniform2f(uResStamp,    canvas.width, canvas.height);
+    gl.uniform4fv(uColorStamp, stroke.color);
+    gl.uniform1f(uZoomStamp,   zoom);
+    gl.uniform2f(uPanStamp,    panX, panY);
+    t0 = performance.now();
+    gl.drawArrays(geo.mode, 0, geo.vertexCount);
+    frameStats.drawMs += performance.now() - t0;
+  } else {
+    gl.useProgram(progFlat);
+    configureAttribs([
+      { loc: aPosFlat,  size: 2, stride: 12, offset: 0 },
+      { loc: aSideFlat, size: 1, stride: 12, offset: 8 },
+    ]);
+    gl.uniform2f(uResFlat,    canvas.width, canvas.height);
+    gl.uniform4fv(uColorFlat, stroke.color);
+    gl.uniform1f(uZoomFlat,   zoom);
+    gl.uniform2f(uPanFlat,    panX, panY);
+    t0 = performance.now();
+    gl.drawArrays(geo.mode, 0, geo.vertexCount);
+    frameStats.drawMs += performance.now() - t0;
+  }
+}
+
+function draw() {
+  frameStats.tessMs = 0;
+  frameStats.drawMs = 0;
+  frameStats.verts  = 0;
+  frameStats.culled = 0;
+
+  gl.clearColor(0.07, 0.07, 0.07, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  for (const s of strokes) {
+    if (isVisible(s)) drawStroke(s);
+    else frameStats.culled++;
+  }
+  if (current) drawStroke(current);
+
+  const mem = performance.memory;
+  statsEl.textContent =
+    `tess   ${frameStats.tessMs.toFixed(2)}ms\n` +
+    `draw   ${frameStats.drawMs.toFixed(2)}ms\n` +
+    `verts  ${frameStats.verts}\n` +
+    `drawn  ${strokes.length - frameStats.culled}/${strokes.length}\n` +
+    `zoom   ${zoom.toFixed(2)}x\n` +
+    (mem ? `heap   ${(mem.usedJSHeapSize / 1048576).toFixed(1)}MB` : '');
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
