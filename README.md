@@ -1,3 +1,8 @@
+# My Website
+
+This has gone through a few iterations, starting with eleventy, then sveltekit, then pandoc + python. The current url is cpbergin.com, I have kept the original 1299651405.com, but will probably drop conorbergins.blog.
+
+
 ## Style guide
 
 Most things have a top level url ie `https://example.com/this/` or `https://example.com/the-other/` everything is lowercase and hyphens are the only delimeters, "cool urls don't change".
@@ -8,11 +13,6 @@ Navigation should be done with a flexible and reconfigurable tag system, it shou
 
 ## The Goblin
 
-The current thinking is the goblin should be an svg and the eyes should be controlled with a transform and css variables
-
-
-# deps
-
-python
+The current thinking is the goblin should be an svg and the eyes should be controlled with a transform and css variables.
 
 

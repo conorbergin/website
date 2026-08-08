@@ -1,4 +1,0 @@
----
-title: Conor Bergin's Website
-date: 2025-05-26
----

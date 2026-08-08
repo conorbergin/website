@@ -14,7 +14,7 @@ desc = "Free fonts, some very interesting historical ones, my favicon is Altengl
 url = "https://youtube.com/@BadObsessionMotorsport/"
 title = "Bad Obsession Motorsport"
 category = "Youtube"
-desc = "I have been following since episode 9 of Project Binky, there really is nothing like it on the internet."
+desc = "A bizarre and singular car build."
 
 [[bookmark]]
 url = "https://youtube.com/@KnitFactoryImpl/"
@@ -26,7 +26,7 @@ desc = "Knitting machines and information on how you can hack them."
 url = "https://youtube.com/@Clickspring/"
 title = "Clickspring"
 category = "Youtube"
-desc = "I have been watching almost since its inception, the quality of fabrication is very high, I particularly like his videos on reverse engineering ancient clockmaking techniques."
+desc = "Top drawer, especially the work on ancient precision clock-making."
 
 [[bookmark]]
 url = "https://youtube.com/@AppliedScience/"
@@ -43,8 +43,12 @@ url = "https://youtube.com/@3Blue1Brown/"
 title = "3Blue1Brown"
 category = "Youtube"
 
-[[bookmark]]
-url = "https://jenson.org/"
-title = "Scott Jenson's website"
-category = "Websites"
+# [[bookmark]]
+# url = "https://jenson.org/"
+# title = "Scott Jenson's website"
+# category = "Websites"
 
+[[bookmark]]
+url = "https://youtube.com/@Blondihacks/"
+title = "Blondihacks"
+category = "Youtube"

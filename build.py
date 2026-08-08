@@ -17,6 +17,9 @@ SRC = Path("src")
 OUT = Path(".output")
 CACHE = Path(".cache")
 
+
+goblin = Path("goblin.svg").read_text()
+
 SKIP_SUFFIXES = {".dj", ".json", ".yaml", ".toml", ".zon", ".md", ".jinja"}
 
 
@@ -75,7 +78,7 @@ _JS = """\
 """
 
 
-def page(title: str, content: str, goblin: str) -> str:
+def page(title: str, content: str) -> str:
     return f"""\
 <!DOCTYPE html>
 <html>
@@ -90,10 +93,10 @@ def page(title: str, content: str, goblin: str) -> str:
 </head>
 <body>
 <header style="width:100%;">
-<nav>
+<nav style="display:flex;gap:0.25rem;">
 <a href="/">Home</a>
 <a href="/blog/">Blog</a>
-<a href="/blog/">Bookmarks</a>
+<a href="/bookmarks/">Bookmarks</a>
 </nav>
 <div style="width:100%;display:flex;justify-content:center;">
 <a href="/">{goblin}</a>
@@ -105,7 +108,7 @@ def page(title: str, content: str, goblin: str) -> str:
 <footer>
 <hr>
 </footer>
-by Conor Bergin, site updated May 2026, <a href="/ai_policy/">AI Policy</a>
+by Conor Bergin, site updated August 2026, <a href="/ai-policy/">AI Policy</a>
 </body>
 </html>"""
 
@@ -117,15 +120,10 @@ def stale(output: Path, *inputs: Path) -> bool:
     return any(p.stat().st_mtime > t for p in inputs if p.exists())
 
 
-def build_goblin() -> str:
-    return Path("goblin.svg").read_text()
-
 
 def collect_posts() -> list[tuple[str, dict]]:
     result = []
     for md in SRC.rglob("*.md"):
-        if md.parent == SRC:
-            continue
         meta = pandoc_meta(md)
         if "blog" in meta.get("tags", []):
             url = "/" + str(md.parent.relative_to(SRC)) + "/"
@@ -133,11 +131,9 @@ def collect_posts() -> list[tuple[str, dict]]:
     return sorted(result, key=lambda x: x[1]["date"], reverse=True)
 
 
-def build_bookmarks(goblin: str):
+def build_bookmarks():
     src = Path("bookmarks.toml")
     out = OUT / "bookmarks" / "index.html"
-    if not stale(out, src, Path("build.py")):
-        return
     data = tomllib.loads(src.read_text())
     bookmarks = data["bookmark"]
     for b in bookmarks:
@@ -160,22 +156,19 @@ def build_bookmarks(goblin: str):
             parts.append(f"<li>{label}{desc}</li>")
         parts.append("</ul>")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(page("Bookmarks", "\n".join(parts), goblin))
+    out.write_text(page("Bookmarks", "\n".join(parts)))
     print(f"  built {out}")
 
 
 def build():
-    goblin = build_goblin()
     posts = collect_posts()
 
-    build_bookmarks(goblin)
+    build_bookmarks()
 
     # Content pages (.md → html via pandoc)
     for md in SRC.rglob("*.md"):
-        if md.parent == SRC:
-            continue
         out = OUT / md.relative_to(SRC).with_suffix(".html")
-        if not stale(out, md, Path("build.py"), CACHE / "goblin.svg"):
+        if not stale(out, md, Path("build.py")):
             continue
         out.parent.mkdir(parents=True, exist_ok=True)
         meta = pandoc_meta(md)
@@ -185,11 +178,10 @@ def build():
         ).stdout
         if "blog" in meta.get("tags", []):
             html = f"<h1>{title}</h1>\n<code>{meta.get('date', '')}</code>\n" + html
-        out.write_text(page(title, html, goblin))
+        out.write_text(page(title, html))
         print(f"  built {out}")
 
     # Homepage
-    site_meta = pandoc_meta(SRC / "index.md")
     n = len(posts)
     items = "\n".join(
         f'<li><a href="{k}">[{v["date"]}] {v["title"]}</a></li>'
@@ -204,7 +196,7 @@ def build():
     )
     out = OUT / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(page(site_meta["title"], index_content, goblin))
+    out.write_text(page("Conor Bergin's Website", index_content))
     print(f"  built {out}")
 
     # Blog index
@@ -214,7 +206,7 @@ def build():
     )
     out = OUT / "blog" / "index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(page(site_meta["title"], f"<ol reversed>\n{items}\n</ol>", goblin))
+    out.write_text(page("Blog", f"<ol reversed>\n{items}\n</ol>"))
     print(f"  built {out}")
 
     # Static files
@@ -246,7 +238,6 @@ def serve():
         daemon=True,
     )
     thread.start()
-    print("serving on :8080")
 
     def snapshot():
         return {p: p.stat().st_mtime for p in SRC.rglob("*") if p.is_file()}

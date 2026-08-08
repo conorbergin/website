@@ -1,8 +1,12 @@
+---
+title: Dyson Award 2026
+date: 2026-08-07
+tags: blog
+---
 
-# Dyson Award 2026
 
 <video controls>
-  <source src="input_nodes_dyson2026.mp4" type="video/mp4">
+  <source src="https://cdn.cpbergin.com/dyson2026/input_nodes_dyson2026.mp4" type="video/mp4">
 </video>
 
 Above is the video from my submission to the James Dyson Award, there were a few posters to go with it but I don't think they were worth including.
